@@ -94,11 +94,9 @@ public class HttpRequest {
 //    }
 
     /**
-     * Returns the timeout to be used when connecting to the resource referenced by this request, or {@code null} if no
-     * timeout is specified.
+     * Returns the timeout to be used when connecting to the resource referenced by this request, or {@code null} if it is not specified.
      * 
-     * @return the timeout to be used when connecting to the resource referenced by this request, or {@code null} if no
-     *         timeout is specified
+     * @return the timeout to be used when connecting to the resource referenced by this request, or {@code null} if it is not specified
      */
     public Duration getConnectTimeout() {
         final int timeout = connection.getConnectTimeout();
@@ -106,18 +104,18 @@ public class HttpRequest {
     }
 
     /**
-     * Returns the value of the {@code If-Modified-Since} HTTP request header.
+     * Returns the value of the {@code If-Modified-Since} HTTP request header, or {@code null} if it is not specified.
      * 
-     * @return the value of the {@code If-Modified-Since} HTTP request header
+     * @return the value of the {@code If-Modified-Since} HTTP request header, or {@code null} if it is not specified
      */
     public long getIfModifiedSince() {
         return connection.getIfModifiedSince();
     }
 
     /**
-     * Returns the connection read timeout, or {@code null} if no timeout is specified.
+     * Returns the connection read timeout, or {@code null} if it is not specified.
      * 
-     * @return the connection read timeout, or {@code null} if no timeout is specified.
+     * @return the connection read timeout, or {@code null} if it is not specified
      */
     public Duration getReadTimeout() {
         final int timeout = connection.getReadTimeout();
@@ -125,7 +123,7 @@ public class HttpRequest {
     }
 
     /**
-     * Returns the value of the named general request header for this request.
+     * Returns the value of the named general request header for this request, or {@code null} if it is not specified.
      * <p>
      * If the header field was defined multiple times, only the last value is returned.
      * <p>
@@ -134,7 +132,7 @@ public class HttpRequest {
      * {@link #setRequestHeader(String, String)} for more information.
      * 
      * @param name the name of a header field (case-insensitive)
-     * @return the value of the named general request header for this request
+     * @return the value of the named general request header for this request, or {@code null} if it is not specified
      */
     public String getRequestHeader(final String name) {
         if (name == null)
@@ -171,9 +169,11 @@ public class HttpRequest {
     }
 
     /**
-     * Returns the {@code User-Agent} HTTP request header.
+     * Returns the {@code User-Agent} HTTP request header, or {@code null} if it is not specified.
+     * <p>
+     * If the {@code User-Agent} is not specified when this request is executed it will be set automatically by the underlying {@code URLConnection}.
      * 
-     * @return the {@code User-Agent} HTTP request header
+     * @return the {@code User-Agent} HTTP request header, or {@code null} if it is not specified
      */
     public String getUserAgent() {
         return getRequestHeader("User-Agent");
@@ -215,7 +215,7 @@ public class HttpRequest {
     public HttpResponse send() throws IOException {
 
         if (isAcceptGZipEncoding())
-            _setAcceptGZipEncoding();
+            setIfNotSet("Accept-Encoding", "gzip");
 
         try {
             connection.connect();
@@ -372,6 +372,15 @@ public class HttpRequest {
         connection.setRequestProperty(name, value);
         return this;
     }
+    
+    /**
+     * Returns the target {@code URL} of this request.
+     * 
+     * @return the target {@code URL} of this request
+     */
+    public URL to() {
+        return connection.getURL();
+    }
 
     /**
      * Enables or disables HTTP caching.
@@ -409,13 +418,27 @@ public class HttpRequest {
         return this;
     }
 
-    private static final Pattern GZIP_PATTERN = Pattern.compile("(?i)\\bgzip\\b"); // https://tools.ietf.org/html/rfc7231#section-3.1.2.1 Accept-Encoding values are case-insensitive
+//    private static final Pattern GZIP_PATTERN = Pattern.compile("(?i)\\bgzip\\b"); // https://tools.ietf.org/html/rfc7231#section-3.1.2.1 Accept-Encoding values are case-insensitive
+//
+//    protected void setIfNotSetAcceptGZipEncoding() {
+//        final String value = getRequestHeader("Accept-Encoding");
+//
+//        if (value == null || !GZIP_PATTERN.matcher(value).find())
+//            setRequestHeader("Accept-Encoding", "gzip");
+//    }
 
-    protected void _setAcceptGZipEncoding() {
-        final String value = getRequestHeader("Accept-Encoding");
+    protected void setIfNotSet(final String name, final String value) {
+        setIfNotSet(name, value, false);
+    }
+    
+    protected void setIfNotSet(final String name, final String value, final boolean caseInsensitive) {
+       final Pattern pattern = Pattern.compile("\\b" + value + "\\b", caseInsensitive ? Pattern.CASE_INSENSITIVE : 0);
+       
+       final String prev = getRequestHeader(name);
 
-        if (value == null || !GZIP_PATTERN.matcher(value).find())
-            setRequestHeader("Accept-Encoding", "gzip");
+       if (prev == null || !pattern.matcher(prev).find())
+           setRequestHeader(name, value);
+        
     }
 
 }
