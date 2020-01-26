@@ -24,6 +24,47 @@ public final class HttpRequestWithBody extends HttpRequest {
     }
 
     /**
+     * Returns the value {@code Content-Encoding} request header, or {@code null} if it is not specified
+     * 
+     * @param the value of the {@code Content-Encoding} header, or {@code null} if it is not specified
+     * @return this {@code HttpRequest} instance
+     */
+    public String getContentEncoding() {
+        return super.getRequestHeader("Content-Encoding");
+    }
+
+    /**
+     * Returns the value {@code Content-Length} request header, or -1 if it is not specified.
+     * 
+     * @param the value of the {@code Content-Length} header, or -1 if it is not specified
+     * @return this {@code HttpRequest} instance
+     */
+    public long getContentLength() {
+        return length;
+    }
+
+    /**
+     * Returns the value {@code Content-Type} request header, or {@code null} if it is not specified.
+     * 
+     * @param the value of the {@code Content-Type} header, or {@code null} if it is not specified
+     * @return this {@code HttpRequest} instance
+     */
+    public String getContentType() {
+        return super.getRequestHeader("Content-Type");
+    }
+
+    /**
+     * Returns the {@code Message-Body} to send to the server, or {@code null} if it is not specified.
+     * 
+     * @param body the {@code Message-Body} to send to the server, or {@code null} if it is not specified
+     * @return this {@code HttpRequest} instance
+     * @throws IOException if an I/O error occurs
+     */
+    public RequestBody getMessageBody() {
+        return body;
+    }
+
+    /**
      * Sends the HTTP request.
      * 
      * @return the response from the server
@@ -33,7 +74,7 @@ public final class HttpRequestWithBody extends HttpRequest {
     public HttpResponse send() throws IOException {
 
         if (isAcceptGZipEncoding())
-            _setAcceptGZipEncoding();
+            setIfNotSet("Accept-Encoding", "gzip");
 
         if (body != null) {
             connection.setDoOutput(true);
