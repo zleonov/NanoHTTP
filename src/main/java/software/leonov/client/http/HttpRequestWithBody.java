@@ -29,8 +29,8 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param the value of the {@code Content-Encoding} header, or {@code null} if it is not specified
      * @return this {@code HttpRequest} instance
      */
-    public String getContentEncoding() {
-        return super.getRequestHeader("Content-Encoding");
+    public String contentEncoding() {
+        return super.header("Content-Encoding");
     }
 
     /**
@@ -39,7 +39,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param the value of the {@code Content-Length} header, or -1 if it is not specified
      * @return this {@code HttpRequest} instance
      */
-    public long getContentLength() {
+    public long contentLength() {
         return length;
     }
 
@@ -49,8 +49,8 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param the value of the {@code Content-Type} header, or {@code null} if it is not specified
      * @return this {@code HttpRequest} instance
      */
-    public String getContentType() {
-        return super.getRequestHeader("Content-Type");
+    public String contentType() {
+        return super.header("Content-Type");
     }
 
     /**
@@ -60,7 +60,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      * @throws IOException if an I/O error occurs
      */
-    public RequestBody getMessageBody() {
+    public RequestBody getBody() {
         return body;
     }
 
@@ -73,8 +73,8 @@ public final class HttpRequestWithBody extends HttpRequest {
     @Override
     public HttpResponse send() throws IOException {
 
-        if (isAcceptGZipEncoding())
-            setIfNotSet("Accept-Encoding", "gzip");
+//        if (acceptGZipEncoding())
+//            setIfNotSet("Accept-Encoding", "gzip");
 
         if (body != null) {
             connection.setDoOutput(true);
@@ -101,11 +101,11 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param encoding the value of the {@code Content-Encoding} header
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentEncoding(final String encoding) {
+    public HttpRequestWithBody contentEncoding(final String encoding) {
         if (encoding == null)
             throw new NullPointerException("encoding == null");
 
-        this.setRequestHeader("Content-Encoding", encoding);
+        this.header("Content-Encoding", encoding);
         return this;
     }
 
@@ -119,7 +119,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param length the value of the {@code Content-Length} header in bytes
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentLength(final long length) {
+    public HttpRequestWithBody contentLength(final long length) {
         if (length < 0)
             throw new IllegalArgumentException("length < 0");
 
@@ -133,11 +133,11 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param type the value of the {@code Content-Type} header
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentType(final String type) {
+    public HttpRequestWithBody contentType(final String type) {
         if (type == null)
             throw new NullPointerException("type == null");
 
-        this.setRequestHeader("Content-Type", type);
+        this.header("Content-Type", type);
         return this;
     }
 
@@ -148,7 +148,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      * @throws IOException if an I/O error occurs
      */
-    public HttpRequestWithBody setMessageBody(final RequestBody body) throws IOException {
+    public HttpRequestWithBody setBody(final RequestBody body) throws IOException {
         if (body == null)
             throw new NullPointerException("body = null");
 

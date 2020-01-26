@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * An exception thrown when attempting to read the {@code Message-Body} of an HTTP response which contains an error
- * {@link HttpResponse#isSuccessStatusCode() Status-Code}.
+ * {@link HttpResponse#isSuccessful() Status-Code}.
  * 
  * @author Zhenya Leonov
  */
@@ -56,7 +56,7 @@ public class HttpException extends IOException {
      * @param responseHeaders the response headers sent by the server or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpException setResponseHeaders(final Map<String, List<String>> responseHeaders) {
+    HttpException responseHeaders(final Map<String, List<String>> responseHeaders) {
         this.responseHeaders = responseHeaders;
         return this;
     }
@@ -88,7 +88,7 @@ public class HttpException extends IOException {
      * 
      * @return the error message sent by the server or {@code null}
      */
-    public String getErrorMessage() {
+    public String errorMessage() {
         return errorMessage;
     }
 
@@ -102,7 +102,7 @@ public class HttpException extends IOException {
      * @return an unmodifiable {@code Map} of the response headers sent by the server or {@code null} if they are not
      *         available or not known
      */
-    public Map<String, List<String>> getResponseHeaders() {
+    public Map<String, List<String>> headers() {
         return responseHeaders;
     }
 
@@ -126,7 +126,7 @@ public class HttpException extends IOException {
      * 
      * @return the {@code Status-Code} parsed from the HTTP response or -1 if it is not available or not known
      */
-    public int getStatusCode() {
+    public int statusCode() {
         return statusCode;
     }
 
@@ -135,7 +135,7 @@ public class HttpException extends IOException {
      * 
      * @return the {@code URL} responsible for this exception or {@code null} if it is not available or not known
      */
-    public URL getURL() {
+    public URL from() {
         return url;
     }
 

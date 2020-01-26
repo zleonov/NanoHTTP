@@ -17,9 +17,13 @@ import java.util.zip.GZIPOutputStream;
  * final RequestBody body = ...
  * final String contentType = ...
  * 
- * final HttpClient http = HttpClient.getDefaultClient();
+ * final HttpClient http = HttpClient.defaultClient();
  * 
- * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setMessageBody(GZipEncoding.stream(body)).send();
+ * http.post(dest)
+ *     .contentType(contentType)
+ *     .contentEncoding("gzip")
+ *     .setBody(GZipEncoding.stream(body))
+ *     .send();
  * </pre>
  * 
  * or
@@ -27,7 +31,12 @@ import java.util.zip.GZIPOutputStream;
  * <pre>
  * 
  * final GZipEncoding gz = GZipEncoding.encode(body);
- * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setContentLength(gz.length()).setMessageBody(gz).send();
+ * http.post(dest)
+ *     .contentType(contentType)
+ *     .contentEncoding("gzip")
+ *     .contentLength(gz.length())
+ *     .setBody(gz)
+ *     .send();
  * </pre>
  * 
  * @author Zhenya Leonov
@@ -102,7 +111,7 @@ public final class GZipEncoding implements RequestBody {
      * @throws IOException if an I/O error occurs
      */
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream stream() throws IOException {
         if (buffer == null) {
             buffer = buffer(body);
             length = buffer.length;
@@ -128,7 +137,7 @@ public final class GZipEncoding implements RequestBody {
         } else {
             final GZIPOutputStream out = new GZIPOutputStream(to, true);
 
-            try (final InputStream from = body.getInputStream()) {
+            try (final InputStream from = body.stream()) {
                 final byte[] buffer = new byte[8192];
                 int r;
                 while ((r = from.read(buffer)) != -1)
@@ -143,7 +152,7 @@ public final class GZipEncoding implements RequestBody {
     private static byte[] buffer(final RequestBody body) throws IOException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        try (final GZIPOutputStream to = new GZIPOutputStream(out); final InputStream from = body.getInputStream()) {
+        try (final GZIPOutputStream to = new GZIPOutputStream(out); final InputStream from = body.stream()) {
             final byte[] buffer = new byte[8192];
             int r;
             while ((r = from.read(buffer)) != -1)

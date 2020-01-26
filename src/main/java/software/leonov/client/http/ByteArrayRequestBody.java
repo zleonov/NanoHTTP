@@ -94,7 +94,7 @@ public class ByteArrayRequestBody implements RequestBody {
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream stream() throws IOException {
         return new ByteArrayInputStream(bytes, offset, length);
     }
 

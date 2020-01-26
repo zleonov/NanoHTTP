@@ -22,13 +22,13 @@ public interface RequestBody {
      * @return an input stream which reads this {@code Message-Body}
      * @throws IOException if an I/O error occurs
      */
-    public InputStream getInputStream() throws IOException;
+    public InputStream stream() throws IOException;
 
     /**
      * Writes this {@code Message-Body} to the specified output stream. Closes the input stream. Does not close the output
      * stream.
      * <p>
-     * The default implementation writes all bytes from the {@link #getInputStream() input stream} to the output stream.
+     * The default implementation writes all bytes from the {@link #stream() input stream} to the output stream.
      * 
      * @param to the specified output stream
      * @throws IOException if an I/O error occurs
@@ -37,7 +37,7 @@ public interface RequestBody {
         if (to == null)
             throw new NullPointerException("to == null");
 
-        try (final InputStream from = getInputStream()) {
+        try (final InputStream from = stream()) {
             final byte[] buffer = new byte[8192];
             int r;
             while ((r = from.read(buffer)) != -1)

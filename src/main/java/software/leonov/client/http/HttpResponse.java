@@ -89,10 +89,10 @@ public class HttpResponse implements AutoCloseable {
                 }
         }
 
-        responseBody = isSuccessStatusCode() && hasMessageBody() ? new AbstractResponseBody(getContentCharset()) {
+        responseBody = isSuccessful() && hasBody() ? new AbstractResponseBody(contentCharset()) {
 
             @Override
-            public InputStream getInputStream() throws IOException {
+            public InputStream stream() throws IOException {
                 return connection.getInputStream();
             }
         } : null;
@@ -146,7 +146,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the charset specified in the {@code Content-Type} header field, or {@link StandardCharsets#ISO_8859_1
      *         ISO_8859_1} if it is unspecified, unsupported, or cannot be discerned
      */
-    public Charset getContentCharset() {
+    public Charset contentCharset() {
         return charset;
     }
 
@@ -155,16 +155,16 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code Content-Encoding} header field, or {@code null} if it is not known
      */
-    public String getContentEncoding() {
+    public String contentEncoding() {
         return contentEncoding;
     }
 
     /**
-     * Returns the value of the {@code Content-Length} header field or -1 if it is not known or cannot be discerned.
+     * Returns the value of the {@code Content-Length} header field, or -1 if it is not known or cannot be discerned.
      * 
-     * @return the value of the {@code Content-Length} header field or -1 if it is not known or cannot be discerned
+     * @return the value of the {@code Content-Length} header field, or -1 if it is not known or cannot be discerned
      */
-    public long getContentLength() {
+    public long contentLength() {
         return contentLength;
     }
 
@@ -173,7 +173,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code Content-Type} header field, or {@code null} if it is not known
      */
-    public String getContentType() {
+    public String contentType() {
         return contentType;
     }
 
@@ -182,7 +182,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code Date} header field or 0 if it is not known
      */
-    public long getDate() {
+    public long date() {
         return date;
     }
 
@@ -194,65 +194,65 @@ public class HttpResponse implements AutoCloseable {
      *         error occurred or no error data was sent
      * @throws IOException if an I/O error occurs
      */
-    public String getErrorMessage() throws IOException {
+    public String errorMessage() throws IOException {
         final InputStream in = connection.getErrorStream();
-        return in == null ? null : new String(AbstractResponseBody.toByteArray(unzip(in)), getContentCharset());
+        return in == null ? null : new String(AbstractResponseBody.toByteArray(unzip(in)), contentCharset());
     }
 
     /**
-     * Returns the value of the {@code Expires} header field or 0 if it is not known or already expired.
+     * Returns the value of the {@code Expires} header field, or 0 if it is not known or already expired.
      * <p>
-     * Returns the value of the {@code Expires} header field or 0 if it is not known or already expired
+     * Returns the value of the {@code Expires} header field, or 0 if it is not known or already expired
      * 
      * @return
      */
-    public long getExpiration() {
+    public long expiration() {
         return expiration;
     }
 
     /**
-     * Returns the value of the {@code If-Modified-Since} header field or 0 to indicate that fetching must always occur.
+     * Returns the value of the {@code If-Modified-Since} header field, or 0 to indicate that fetching must always occur.
      * 
-     * @return the value of the {@code If-Modified-Since} header field or 0 to indicate that fetching must always occur
+     * @return the value of the {@code If-Modified-Since} header field, or 0 to indicate that fetching must always occur
      */
-    public long getIfModifiedSince() {
+    public long ifModifiedSince() {
         return ifModifiedSince;
     }
 
     /**
-     * Returns the {@code Message-Body} sent by the server, or {@code null} if this response {@link #hasMessageBody() does
+     * Returns the {@code Message-Body} sent by the server, or {@code null} if this response {@link #hasBody() does
      * not have} a {@code Message-Body}.
      * <p>
      * <b>Note:</b> Whether or not a {@code Message-Body} is buffered in the response is implementation dependent. Unless
      * otherwise stated, it should be assumed that the {@code ResponseBody} is <i>one-shot</i> stream backed by an active
      * connection to the server, and may be consumed only <b>once</b> by calling the the {@link ResponseBody#asString()},
-     * {@link ResponseBody#toByteArray()}, or {@link ResponseBody#getInputStream()} methods.
+     * {@link ResponseBody#toByteArray()}, or {@link ResponseBody#stream()} methods.
      * <p>
-     * The response body <i>should</i> be consumed in it's entirety to allow the underlying {@code Connection} to be reused,
+     * The response body <i>should</i> be consumed in it's entirety to allow the underlying {@code URLConnection} to be reused,
      * assuming <i>keep-alive</i> is on. All underlying streams will be closed when this response is {@link #close()
      * closed}.
      * 
-     * @return the {@code Message-Body} sent by the server, or {@code null} if this response {@link #hasMessageBody() does
+     * @return the {@code Message-Body} sent by the server, or {@code null} if this response {@link #hasBody() does
      *         not have} a {@code Message-Body}
      * @throws IOException   if an I/O error occurs
      * @throws HttpException if an error occurs when communicating with the remote resource
      */
-    public ResponseBody getMessageBody() throws HttpException, IOException {
-        if (isSuccessStatusCode())
+    public ResponseBody getBody() throws HttpException, IOException {
+        if (isSuccessful())
             return responseBody;
         else
-            throw new HttpException(getStatusLine()).setErrorMessage(getErrorMessage()).setResponseHeaders(getResponseHeaders()).setStatusCode(getStatusCode()).setURL(from());
+            throw new HttpException(statusLine()).setErrorMessage(errorMessage()).responseHeaders(headers()).setStatusCode(statusCode()).setURL(from());
     }
 
     /**
-     * Returns the {@code Reason-Phrase}, if any, parsed alongside the {@link #getStatusCode() Status-Code} from the
-     * {@link #getStatusLine() Status-Line}, or {@code null} if it could be discerned (the result was not valid HTTP).
+     * Returns the {@code Reason-Phrase}, if any, parsed alongside the {@link #statusCode() Status-Code} from the
+     * {@link #statusLine() Status-Line}, or {@code null} if it could be discerned (the result was not valid HTTP).
      * 
-     * @return the {@code Reason-Phrase}, if any, parsed alongside the {@link #getStatusCode() Status-Code} from the
-     *         {@link #getStatusLine() Status-Line}, or {@code null} if it could be discerned (the result was not valid
+     * @return the {@code Reason-Phrase}, if any, parsed alongside the {@link #statusCode() Status-Code} from the
+     *         {@link #statusLine() Status-Line}, or {@code null} if it could be discerned (the result was not valid
      *         HTTP)
      */
-    public String getReasonPhrase() {
+    public String reasonPhrase() {
         return reasonPhrase;
     }
 
@@ -264,7 +264,7 @@ public class HttpResponse implements AutoCloseable {
      * @param name the name of a header field (case-insensitive)
      * @return the value of the named header field, or {@code null} if there is no such field in the response headers
      */
-    public String getResponseHeader(final String name) {
+    public String header(final String name) {
         if (name == null)
             throw new NullPointerException("name == null");
 
@@ -280,12 +280,12 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return an unmodifiable {@code Map} of the response headers sent by the server
      */
-    public Map<String, List<String>> getResponseHeaders() {
+    public Map<String, List<String>> headers() {
         return responseHeaders;
     }
 
     /**
-     * Returns the {@code Status-Code} parsed from the HTTP response or -1 if no code can be discerned (the result was not
+     * Returns the {@code Status-Code} parsed from the HTTP response, or -1 if no code can be discerned (the result was not
      * valid HTTP).
      * <p>
      * The first digit of the {@code Status-Code} defines the class of response. The last two digits do not have any
@@ -303,10 +303,10 @@ public class HttpResponse implements AutoCloseable {
      * - 5xx: Server Error - The server failed to fulfill an apparently valid request
      * </pre>
      * 
-     * @return the {@code Status-Code} parsed from the HTTP response or -1 if no code can be discerned (the result was not
+     * @return the {@code Status-Code} parsed from the HTTP response, or -1 if no code can be discerned (the result was not
      *         valid HTTP)
      */
-    public int getStatusCode() {
+    public int statusCode() {
         return statusCode;
     }
 
@@ -317,7 +317,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the {@code Status-Line} parsed from the HTTP response, or {@code null} if it cannot be discerned (the result
      *         was not valid HTTP)
      */
-    public String getStatusLine() {
+    public String statusLine() {
         return statusLine;
     }
 
@@ -341,22 +341,22 @@ public class HttpResponse implements AutoCloseable {
      * @return {@code true} if this response contains a {@code Message-Body} according to
      *         <a href="https://tools.ietf.org/html/rfc7230#section-3.3" target="_blank">RFC-7230</a>, else {@code false}
      */
-    public boolean hasMessageBody() {
+    public boolean hasBody() {
         return connection.getRequestMethod().equals("HEAD") || statusCode < 200 || statusCode == HTTP_NO_CONTENT || statusCode == HTTP_NOT_MODIFIED ? false : true;
     }
 
     /**
-     * Returns {@code true} if the response contains a 2xx {@link #getStatusCode() Status-Code}, else {@code false}.
+     * Returns {@code true} if the response contains a 2xx {@link #statusCode() Status-Code}, else {@code false}.
      * 
-     * @return {@code true} if the response contains a 2xx {@link #getStatusCode() Status-Code}, else {@code false}
+     * @return {@code true} if the response contains a 2xx {@link #statusCode() Status-Code}, else {@code false}
      */
-    public boolean isSuccessStatusCode() {
+    public boolean isSuccessful() {
         return statusCode >= 200 && statusCode < 300;
     }
 
     /**
      * Override {@link #getContentCharset() Content-Type} charset returned by the server. Calling this method will ensure
-     * {@link #getMessageBody() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset
+     * {@link #getBody() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset
      * to parse the {@code Message-Body}.
      * <p>
      * As stated in <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5" target="_blank">RFC-7231</a>: <i>In
@@ -366,7 +366,7 @@ public class HttpResponse implements AutoCloseable {
      * @param charset the charset to use
      * @return this {@code HttpResponse} instance
      */
-    public HttpResponse setContentCharset(final Charset charset) {
+    public HttpResponse contentCharset(final Charset charset) {
         if (charset == null)
             throw new NullPointerException("charset == null");
 
@@ -375,11 +375,11 @@ public class HttpResponse implements AutoCloseable {
     }
 
     private InputStream unzip(final InputStream in) throws IOException {
-        if ("gzip".equals(getContentEncoding()))
+        if ("gzip".equals(contentEncoding()))
             return new GZIPInputStream(in);
-        else if ("x-gzip".equals(getContentEncoding()))
+        else if ("x-gzip".equals(contentEncoding()))
             return new GZIPInputStream(in);
-        else if ("deflate".equals(getContentEncoding()))
+        else if ("deflate".equals(contentEncoding()))
             return new DeflaterInputStream(in);
         else
             return in;

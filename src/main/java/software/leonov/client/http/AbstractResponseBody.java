@@ -27,7 +27,7 @@ abstract class AbstractResponseBody implements ResponseBody {
     }
 
     @Override
-    public abstract InputStream getInputStream() throws IOException;
+    public abstract InputStream stream() throws IOException;
 
     /**
      * Returns a byte array containing all the bytes read from this {@code Message-Body}.
@@ -36,7 +36,7 @@ abstract class AbstractResponseBody implements ResponseBody {
      * @throws IOException if an I/O error occurs
      */
     public final byte[] toByteArray() throws IOException {
-        return toByteArray(getInputStream());
+        return toByteArray(stream());
     }
 
     /**

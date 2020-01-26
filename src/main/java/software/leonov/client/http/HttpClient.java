@@ -23,7 +23,7 @@ import javax.net.ssl.X509TrustManager;
 
 /**
  * The entry point for making HTTP requests. Instances of this class can be obtains by calling
- * {@link #getDefaultClient()} or using a {@link #builder() builder}.
+ * {@link #defaultClient()} or using a {@link #builder() builder}.
  * 
  * @author Zhenya Leonov
  */
@@ -35,7 +35,7 @@ public final class HttpClient {
     private final boolean followRedirects;
     private final Duration readTimeout;
     private final boolean useCaches;
-    private final boolean acceptGZipEncoding;
+    // private final boolean acceptGZipEncoding;
 
     private final List<String> userPass;
 
@@ -46,7 +46,7 @@ public final class HttpClient {
 
     private static final HttpClient defaultClient = builder().build();
 
-    private HttpClient(final Proxy proxy, final Map<String, List<String>> requestHeaders, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final boolean acceptGZipEncoding,
+    private HttpClient(final Proxy proxy, final Map<String, List<String>> requestHeaders, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, /*final boolean acceptGZipEncoding,*/
             final List<String> userPass, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) {
         this.proxy = proxy;
         this.requestHeaders = requestHeaders;
@@ -54,7 +54,7 @@ public final class HttpClient {
         this.followRedirects = followRedirects;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
-        this.acceptGZipEncoding = acceptGZipEncoding;
+        // this.acceptGZipEncoding = acceptGZipEncoding;
         this.userPass = userPass;
         this.hostnameVerifier = hostnameVerifier;
         this.sslSocketFactory = sslSocketFactory;
@@ -79,7 +79,7 @@ public final class HttpClient {
      * 
      * @return an {@code HttpClient} instance with default settings
      */
-    public static HttpClient getDefaultClient() {
+    public static HttpClient defaultClient() {
         return defaultClient;
     }
 
@@ -109,7 +109,7 @@ public final class HttpClient {
     public HttpRequestWithBody delete(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory));
+        return defaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -134,7 +134,7 @@ public final class HttpClient {
     public HttpRequest get(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory));
+        return defaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -168,7 +168,7 @@ public final class HttpClient {
     public HttpRequest head(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory));
+        return defaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -193,7 +193,7 @@ public final class HttpClient {
     public HttpRequest options(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory));
+        return defaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -249,7 +249,7 @@ public final class HttpClient {
     public HttpRequestWithBody post(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory));
+        return defaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -278,7 +278,7 @@ public final class HttpClient {
     public HttpRequestWithBody put(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory));
+        return defaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -308,16 +308,19 @@ public final class HttpClient {
     public HttpRequest trace(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory));
+        return defaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
-    private <T extends HttpRequest> T setDefaults(final T request) {
-        requestHeaders.forEach((name, values) -> values.forEach(value -> request.setRequestHeader(name, value)));
+    private <T extends HttpRequest> T defaults(final T request) {
+        requestHeaders.forEach((name, values) -> values.forEach(value -> request.header(name, value)));
 
-        request.setUseCaches(useCaches).setReadTimeout(readTimeout).setFollowRedirects(followRedirects).setConnectTimeout(connectTimeout).setAcceptGZipEncoding(acceptGZipEncoding);
+        request.useCaches(useCaches).readTimeout(readTimeout).followRedirects(followRedirects).connectTimeout(connectTimeout)
+        //.acceptGZipEncoding(acceptGZipEncoding)
+        .header("Accept-Encoding", "gzip")
+        ;
 
         if (userPass != null)
-            request.setBasicAuthentication(userPass.get(0), userPass.get(1));
+            request.authenticate(userPass.get(0), userPass.get(1));
 
         return request;
     }
@@ -331,7 +334,7 @@ public final class HttpClient {
 
         private final Map<String, List<String>> requestHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-        private boolean acceptGZipEncoding = true;
+        //private boolean acceptGZipEncoding = true;
         private boolean followRedirects = true;
         private boolean useCaches = true;
 
@@ -396,7 +399,7 @@ public final class HttpClient {
          * @return a new {@code HttpClient} configured by this builder
          */
         public HttpClient build() {
-            return new HttpClient(proxy, requestHeaders, useCaches, followRedirects, connectTimeout, readTimeout, acceptGZipEncoding, userPass, hostnameVerifier, sslSocketFactory);
+            return new HttpClient(proxy, requestHeaders, useCaches, followRedirects, connectTimeout, readTimeout, /*acceptGZipEncoding,*/ userPass, hostnameVerifier, sslSocketFactory);
         }
 
         /**
@@ -430,29 +433,29 @@ public final class HttpClient {
 
             } }, null);
 
-            setHostnameVerifier((hostname, session) -> {
+            hostnameVerifier((hostname, session) -> {
                 return true;
-            }).setSSLSocketFactory(sc.getSocketFactory());
+            }).sslSocketFactory(sc.getSocketFactory());
 
             return this;
         }
 
-        /**
-         * Enables or disables GZip compression for {@code HttpResponse}s of all requests generated by this {@code HttpClient}.
-         * When enabled the {@code Accept-Encoding} header will contain a value of {@code gzip}. This is the most common HTTP
-         * compression format.
-         * <p>
-         * The HTTP/1.1 standard also recommends that the servers supporting this {@code Content-Encoding} should recognize
-         * {@code x-gzip} as an alias, for compatibility purposes.
-         * 
-         * @param acceptGZipEncoding whether or not to enable GZip compression for {@code HttpResponse}s of all requests generated by
-         *                   this {@code HttpClient}
-         * @return this {@code HttpRequest} instance
-         */
-        public Builder setDefaultAcceptGZipEncoding(final boolean acceptGZipEncoding) {
-            this.acceptGZipEncoding = acceptGZipEncoding;
-            return this;
-        }
+//        /**
+//         * Enables or disables GZip compression for {@code HttpResponse}s of all requests generated by this {@code HttpClient}.
+//         * When enabled the {@code Accept-Encoding} header will contain a value of {@code gzip}. This is the most common HTTP
+//         * compression format.
+//         * <p>
+//         * The HTTP/1.1 standard also recommends that the servers supporting this {@code Content-Encoding} should recognize
+//         * {@code x-gzip} as an alias, for compatibility purposes.
+//         * 
+//         * @param acceptGZipEncoding whether or not to enable GZip compression for {@code HttpResponse}s of all requests generated by
+//         *                   this {@code HttpClient}
+//         * @return this {@code HttpRequest} instance
+//         */
+//        public Builder acceptGZipEncoding(final boolean acceptGZipEncoding) {
+//            this.acceptGZipEncoding = acceptGZipEncoding;
+//            return this;
+//        }
 
         /**
          * Allows all requests generated by this {@code HttpClient} to be authenticated using the "Basic" HTTP authentication
@@ -466,7 +469,7 @@ public final class HttpClient {
          * @param password the password
          * @return this {@code Builder} instance
          */
-        public Builder setDefaultBasicAuthentication(final String username, final String password) {
+        public Builder authenticate(final String username, final String password) {
             if (username == null)
                 throw new NullPointerException("username == null");
             if (password == null)
@@ -490,7 +493,7 @@ public final class HttpClient {
          * @param timeout the connect timeout
          * @return this {@code Builder} instance
          */
-        public Builder setDefaultConnectTimeout(final Duration connectTimeout) {
+        public Builder connectTimeout(final Duration connectTimeout) {
             if (connectTimeout == null)
                 throw new NullPointerException("connectTimeout == null");
 
@@ -511,7 +514,7 @@ public final class HttpClient {
          * @param followRedirects a {@code boolean} indicating whether or not to follow HTTP redirects
          * @return this {@code Builder} instance
          */
-        public Builder setDefaultFollowRedirects(final boolean followRedirects) {
+        public Builder followRedirects(final boolean followRedirects) {
             this.followRedirects = followRedirects;
             return this;
         }
@@ -526,7 +529,7 @@ public final class HttpClient {
          * @param timeout the read timeout
          * @return this {@code Builder} instance
          */
-        public Builder setDefaultReadTimeout(final Duration readTimeout) {
+        public Builder readTimeout(final Duration readTimeout) {
             if (readTimeout == null)
                 throw new NullPointerException("readTimeout == null");
 
@@ -564,7 +567,7 @@ public final class HttpClient {
          * @param value the header value
          * @return this {@code Builder} instance
          */
-        public Builder setDefaultRequestHeader(final String name, final String value) {
+        public Builder header(final String name, final String value) {
             if (name == null)
                 throw new NullPointerException("name == null");
             if (value == null)
@@ -588,7 +591,7 @@ public final class HttpClient {
          * @param useCaches a boolean indicating whether or not to allow HTTP caching
          * @return this {@code Builder} instance
          */
-        public Builder setDefaultUseCaches(final boolean useCaches) {
+        public Builder useCaches(final boolean useCaches) {
             this.useCaches = useCaches;
             return this;
         }
@@ -602,11 +605,11 @@ public final class HttpClient {
          * @param agent the {@code User-Agent} string
          * @return this {@code Builder} instance
          */
-        public Builder setDefaultUserAgent(final String agent) {
+        public Builder userAgent(final String agent) {
             if (agent == null)
                 throw new NullPointerException("timeout == null");
 
-            return setDefaultRequestHeader("User-Agent", agent);
+            return header("User-Agent", agent);
         }
 
         /**
@@ -615,7 +618,7 @@ public final class HttpClient {
          * @param HostnameVerifier the {@code HostnameVerifier} to use
          * @return this {@code Builder} instance
          */
-        public Builder setHostnameVerifier(final HostnameVerifier hostnameVerifier) {
+        public Builder hostnameVerifier(final HostnameVerifier hostnameVerifier) {
             if (hostnameVerifier == null)
                 throw new NullPointerException("hostnameVerifier == null");
 
@@ -631,7 +634,7 @@ public final class HttpClient {
          * 
          * @return this {@code Builder} instance
          */
-        public Builder setProxy(final Proxy proxy) {
+        public Builder proxy(final Proxy proxy) {
             if (proxy == null)
                 throw new NullPointerException("proxy == null");
 
@@ -645,7 +648,7 @@ public final class HttpClient {
          * @param sslSocketFactory the {@code SSLSocketFactory} to use
          * @return this {@code Builder} instance
          */
-        public Builder setSSLSocketFactory(final SSLSocketFactory sslSocketFactory) {
+        public Builder sslSocketFactory(final SSLSocketFactory sslSocketFactory) {
             if (sslSocketFactory == null)
                 throw new NullPointerException("sslSocketFactory == null");
 
@@ -657,12 +660,12 @@ public final class HttpClient {
 
     /**
      * Returns a builder that configures and creates {@code HttpClient} instances. The builder is initialized with the
-     * {@link HttpClient#getDefaultClient() default} settings.
+     * {@link HttpClient#defaultClient() default} settings.
      * 
      * @return a builder that configures and creates {@code HttpClient} instances
      */
     public static Builder builder() {
-        return new Builder();
+        return new Builder().header("Accept-Encoding", "gzip");
     }
 
 }

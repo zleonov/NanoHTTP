@@ -9,7 +9,7 @@ import java.io.InputStream;
  * <b>Note:</b> Whether or not a {@code Message-Body} is buffered in the response is implementation dependent. Unless
  * otherwise stated, it should be assumed that this {@code ResponseBody} object represents a <i>one-shot</i> stream
  * backed by an active connection to the server, and may be consumed only <b>once</b> by calling the the
- * {@link ResponseBody#asString()}, {@link ResponseBody#toByteArray()}, or {@link ResponseBody#getInputStream()}
+ * {@link ResponseBody#asString()}, {@link ResponseBody#toByteArray()}, or {@link ResponseBody#stream()}
  * methods.
  * <p>
  * The response body <i>should</i> be consumed in it's entirety to allow the underlying {@code Connection} to be reused,
@@ -30,7 +30,7 @@ public interface ResponseBody {
      * @return an input stream which reads this {@code Message-Body}
      * @throws IOException if an I/O error occurs
      */
-    public InputStream getInputStream() throws IOException;
+    public InputStream stream() throws IOException;
 
     /**
      * Parses and returns this {@code Message-Body} as a string. The charset used is determined by
