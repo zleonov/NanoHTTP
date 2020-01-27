@@ -33,11 +33,11 @@ try (final HttpResponse response = HttpClient.defaultClient()
 ```java
 // Send an audio FLAC file using GZip compression
 final URL resource = ...
-final Path song = ...
+final Path file = ...
 try (final HttpResponse response = HttpClient.defaultClient()
                                              .post(resource)
                                              .setContentType("audio/x-flac; rate=16000")
-                                             .setBody(GZipEncoding.stream(() -> Files.newInputStream(song))) // Content-Encoding: gzip will be automatically set, InputStream will be automatically closed
+                                             .setBody(GZipEncoding.stream(() -> Files.newInputStream(file))) // Content-Encoding: gzip will be automatically set, InputStream will be automatically closed
                                              .send())
 {
    ...
@@ -73,7 +73,7 @@ Why another HTTP Client?
 ========================
 It's true that there are more than several HTTP Client libraries flowing around the Java ecosystem. But there are several features that make NanoHTTP unique.
 
-First, it has **zero dependencies**. Second, it matches the behavior of *HttpURLConnection*, which makes it ideal to upgrade code written with *HttpURLConnection* idiosyncrasies in mind. Third, did I mention **zero dependencies**?
+Since NanoHTTP closely matches the behavior of *HttpURLConnection*, it is ideal for users who are aware of or written code with *HttpURLConnection* idiosyncrasies in mind. And did I mention **zero dependencies**?
 
 But if you want something more?
 ===============================
@@ -88,6 +88,7 @@ What's next?
 ============
 - Publish the project on Maven Central
 - Add native support for HTTP <i>multipart/form-data</i> requests
+- Cookie handling
 - This project is **sorely lacking** tests
     - Add more unit-tests
     - Add more integration-tests (we will need to decide how to mock HTTP responses, for example we may use [WireMock](https://github.com/tomakehurst/wiremock)
