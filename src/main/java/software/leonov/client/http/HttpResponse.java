@@ -31,14 +31,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
-
-import javax.swing.text.Utilities;
 
 /**
  * An HTTP response.
@@ -46,8 +42,6 @@ import javax.swing.text.Utilities;
  * @author Zhenya Leonov
  */
 public class HttpResponse implements AutoCloseable {
-
-    private static final Logger logger = Logger.getLogger(Utilities.class.getName());
 
     private static final Pattern CHARSET = Pattern.compile("(?i)charset=\\s*\"?([^\\s;\"]*)");
 
@@ -65,13 +59,15 @@ public class HttpResponse implements AutoCloseable {
     private final long expiration;
     private final long ifModifiedSince;
 
+    private final boolean hasBody;
+    
     private final ResponseBody body;
 
     private final Map<String, List<String>> responseHeaders;
 
     private final int statusCode;
 
-    private final URL url;
+    private final URL from;
 
     HttpResponse(final HttpURLConnection connection) throws IOException {
         if (connection == null)
@@ -85,7 +81,7 @@ public class HttpResponse implements AutoCloseable {
         reasonPhrase = connection.getResponseMessage();
         contentType = connection.getContentType();
         contentEncoding = connection.getContentEncoding();
-        url = connection.getURL();
+        from = connection.getURL();
 
         final Map<String, List<String>> headers = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
         connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
@@ -101,14 +97,15 @@ public class HttpResponse implements AutoCloseable {
                 try {
                     charset = Charset.forName(matcher.group(1));
                 } catch (final IllegalCharsetNameException | UnsupportedCharsetException e) {
-                    logger.log(Level.WARNING, e, () -> String.format("[%s] Unable to parse the Content-Type charset: %s", Thread.currentThread().getName(), contentType));
                 }
         }
+        
+        hasBody = connection.getRequestMethod().equals("HEAD") || statusCode < 200 || statusCode == HTTP_NO_CONTENT || statusCode == HTTP_NOT_MODIFIED ? false : true;
 
         if (!isSuccessful() && ("POST".equals(connection.getRequestMethod()) || "PUT".equals(connection.getRequestMethod()) || "DELETE".equals(connection.getRequestMethod())))
             throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
 
-        body = isSuccessful() && hasBody() ? new AbstractResponseBody(getContentCharset()) {
+        body = isSuccessful() && hasBody ? new AbstractResponseBody(getContentCharset()) {
 
             @Override
             public InputStream getInputStream() throws IOException {
@@ -124,16 +121,16 @@ public class HttpResponse implements AutoCloseable {
     @Override
     public void close() {
 
-        // InputStream in = null;
-
         try {
-            closeQuietly(connection.getInputStream());
+            connection.getInputStream().close();
         } catch (final IOException e) {
-            // logger.log(Level.WARNING, e, () -> String.format("[%s] Connection.getInputStream() threw an IOException:",
-            // Thread.currentThread().getName()));
         }
 
-        closeQuietly(connection.getErrorStream());
+        try {
+            connection.getErrorStream().close();
+        } catch (final IOException e) {
+        }
+
     }
 
     /**
@@ -154,7 +151,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the request {@code URL} that initiated this {@link HttpRequest}
      */
     public URL from() {
-        return url;
+        return from;
     }
 
     /**
@@ -257,7 +254,7 @@ public class HttpResponse implements AutoCloseable {
      * @throws IOException           if any other I/O error occurs
      */
     public ResponseBody getBody() throws HttpResponseException, IOException {
-        if (isSuccessful())
+        if (isSuccessful() || !hasBody())
             return body;
         else {
             disconnect();
@@ -362,7 +359,7 @@ public class HttpResponse implements AutoCloseable {
      *         <a href="https://tools.ietf.org/html/rfc7230#section-3.3" target="_blank">RFC-7230</a>, else {@code false}
      */
     public boolean hasBody() {
-        return connection.getRequestMethod().equals("HEAD") || statusCode < 200 || statusCode == HTTP_NO_CONTENT || statusCode == HTTP_NOT_MODIFIED ? false : true;
+        return hasBody;
     }
 
     /**
@@ -403,15 +400,6 @@ public class HttpResponse implements AutoCloseable {
             return new DeflaterInputStream(in);
         else
             return in;
-    }
-
-    private static void closeQuietly(final InputStream in) {
-        try {
-            if (in != null)
-                in.close();
-        } catch (final IOException e) {
-            logger.log(Level.WARNING, e, () -> String.format("[%s] InputStream.close() threw an IOException", Thread.currentThread().getName()));
-        }
     }
 
 }
