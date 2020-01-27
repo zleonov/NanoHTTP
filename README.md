@@ -65,4 +65,8 @@ What's next?
     - Add more unit-tests
     - Add more integration-tests (we will need to decide how to mock HTTP responses, for example we may use [WireMock](https://github.com/tomakehurst/wiremock)
 - Create a Wiki with frequently asked questions, examples, and guides
+- Create a project site on GitHub pages and publish javadocs or link to [javadoc.io](https://www.javadoc.io/)
 
+Can I help?
+===========
+Yes! Send me your patches and contributions. I will come up with an Contributor License Agreement. 
