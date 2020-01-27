@@ -12,20 +12,18 @@ NanoHTTP is a paper-thin wrapper around *HttpURLConnection* with a user friendly
 
 ```java
 // A simple GET request
-final String address = ...
-try (final HttpResponse response = HttpClient.defaultClient().get(new URL(address)).send()){
+final URL resource = ...
+try (final HttpResponse response = HttpClient.defaultClient().get(resource).send()){
    System.out.println(response.getBody().asString());
 }
 ```
 ```java
 // Send HTTP form content
-final String address = ...
+final URL resource = ...
+final RequestBody body = new FormBuilder().encode("param", "value").build());
 try (final HttpResponse response = HttpClient.defaultClient()
-                                             .post(new URL(address))
-                                             .setContentType("application/x-www-form-urlencoded")
-                                             .setBody(new FormBuilder().encode("param1", "value1")
-                                                                       .encode("param2", "value2")
-                                                                       .build())
+                                             .post(resource)
+                                             .setBody(body) // Content-Type: application/x-www-form-urlencoded will be automatically set
                                              .send())
 {
    System.out.println(response.getStatusLine());
@@ -33,13 +31,12 @@ try (final HttpResponse response = HttpClient.defaultClient()
 ```
 ```java
 // Send an audio FLAC file using GZip compression
-final String address = ...
+final URL resource = ...
 final Path song = ...
 try (final HttpResponse response = HttpClient.defaultClient()
-                                             .post(new URL(address))
+                                             .post(resource)
                                              .setContentType("audio/x-flac; rate=16000")
-                                             .setContentEncoding("gzip")
-                                             .setBody(GZipEncoding.stream(() -> Files.newInputStream(song)))
+                                             .setBody(GZipEncoding.stream(() -> Files.newInputStream(song))) // Content-Encoding: gzip will be automatically set, InputStream will be automatically closed
                                              .send())
 {
    System.out.println(response.getStatusLine());
