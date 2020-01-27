@@ -34,15 +34,16 @@ import java.util.zip.GZIPOutputStream;
  * 
  * final HttpClient http = HttpClient.getDefaultClient();
  * 
- * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setMessageBody(GZipEncoding.stream(body)).send();
+ * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setBody(GZipEncoding.stream(body)).send();
+ * http.post(dest).setContentType(contentType).setBody(GZipEncoding.stream(body)).send(); // Content-Encoding will be set automatically
  * </pre>
  * 
  * or
  * 
  * <pre>
- * 
  * final GZipEncoding gz = GZipEncoding.encode(body);
- * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setContentLength(gz.length()).setMessageBody(gz).send();
+ * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setContentLength(gz.length()).setBody(gz).send();
+ * http.post(dest).setContentType(contentType).setBody(gz).send(); // Content-Length and Content-Encoding will be set automatically
  * </pre>
  * 
  * @author Zhenya Leonov

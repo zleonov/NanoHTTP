@@ -34,6 +34,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
+import com.google.api.client.http.HttpResponseException;
+
 /**
  * An HTTP request with no {@code Message-Body}: {@code HEAD}, {@code GET}, {@code OPTIONS}, or {@code TRACE}.
  * 
@@ -121,7 +123,7 @@ public class HttpRequest {
      * <p>
      * <b>Note:</b> Some request headers like {@code Pragma}, {@code Cache-Control}, {@code Connection},
      * {@code Proxy-Connection} (not an exhaustive list) are not set until this request is executed, others may not be
-     * accessible for security reasons. See {@link #setHeader(String, String)} for more information. T
+     * accessible for security reasons. See {@link #setHeader(String, String)} for more information.
      * 
      * @return an unmodifiable {@code Map} of the request headers for this connection
      */
@@ -173,9 +175,12 @@ public class HttpRequest {
     /**
      * Sends the HTTP request.
      * <p>
-     * For {@code GET}, {@code HEAD}, {@code OPTIONS}, and {@code TRACE} requests, an {@link HttpResponseException} will not be
-     * thrown if the HTTP response contains an {@link HttpResponse#isSuccessful() error} {@link HttpResponse#getStatusCode()
-     * Status-Code} until attempts to read the {@link HttpResponse#getBody() Message-Body} are made.
+     * For {@code GET}, {@code OPTIONS}, and {@code TRACE} requests, an {@link HttpResponseException} will not be thrown if
+     * the HTTP response contains an {@link HttpResponse#isSuccessful() error} {@link HttpResponse#getStatusCode()
+     * Status-Code} until attempts to read the {@link HttpResponse#getBody() Message-Body} are made. If the request
+     * {@link HttpResponse#hasBody() does not have} a {@code Message-Body} an {@code HttpResponseException} will never be
+     * thrown. The error information can be interrogated via the {@link HttpResponse#getStatusCode()} and
+     * {@link HttpResponse#getErrorMessage()} methods.
      * 
      * @return the response from the server
      * @throws IOException if an I/O error occurs
