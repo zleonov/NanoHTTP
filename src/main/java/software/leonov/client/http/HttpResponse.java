@@ -252,14 +252,17 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the {@code Message-Body} sent by the server or {@code null} if this response {@link #hasBody() does not have}
      *         a {@code Message-Body}
-     * @throws IOException   if an I/O error occurs
-     * @throws HttpResponseException if an error occurs when communicating with the remote resource
+     * @throws HttpResponseException if the HTTP response contains an {@link HttpResponse#isSuccessful() error}
+     *                               {@link HttpResponse#getStatusCode() Status-Code}
+     * @throws IOException           if any other I/O error occurs
      */
     public ResponseBody getBody() throws HttpResponseException, IOException {
         if (isSuccessful())
             return body;
-        else
+        else {
+            disconnect();
             throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
+        }
     }
 
     /**

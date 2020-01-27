@@ -96,7 +96,8 @@ public final class HttpRequestWithBody extends HttpRequest {
      * will automatically be updated.
      * 
      * @return the response from the server
-     * @throws HttpResponseException if the HTTP server reported an error
+     * @throws HttpResponseException if the HTTP response contains an {@link HttpResponse#isSuccessful() error}
+     *                               {@link HttpResponse#getStatusCode() Status-Code}
      * @throws IOException           if any other I/O error occurs
      */
     @Override
