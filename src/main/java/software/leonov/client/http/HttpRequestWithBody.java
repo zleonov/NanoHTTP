@@ -83,7 +83,8 @@ public final class HttpRequestWithBody extends HttpRequest {
      * Sends the HTTP request.
      * 
      * @return the response from the server
-     * @throws IOException if an I/O error occurs
+     * @throws HttpException if the HTTP server reported an error
+     * @throws IOException   if any other I/O error occurs
      */
     @Override
     public HttpResponse send() throws IOException {

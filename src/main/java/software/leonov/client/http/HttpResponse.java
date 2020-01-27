@@ -86,7 +86,7 @@ public class HttpResponse implements AutoCloseable {
         contentType = connection.getContentType();
         contentEncoding = connection.getContentEncoding();
         url = connection.getURL();
-        
+
         final Map<String, List<String>> headers = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
         connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
         responseHeaders = Collections.unmodifiableMap(headers);
@@ -105,7 +105,10 @@ public class HttpResponse implements AutoCloseable {
                 }
         }
 
-        responseBody = isSuccessStatusCode() && hasBody() ? new AbstractResponseBody(getContentCharset()) {
+        if (!isSuccessful() && connection.getRequestMethod().equals("PUT") || connection.getRequestMethod().equals("POST") || connection.getRequestMethod().equals("DELETE"))
+            throw new HttpException(getStatusLine()).setErrorMessage(getErrorMessage()).setResponseHeaders(getHeaders()).setStatusCode(getStatusCode()).setURL(from());
+
+        responseBody = isSuccessful() && hasBody() ? new AbstractResponseBody(getContentCharset()) {
 
             @Override
             public InputStream getInputStream() throws IOException {
@@ -121,14 +124,13 @@ public class HttpResponse implements AutoCloseable {
     @Override
     public void close() {
 
-        InputStream in = null;
+        // InputStream in = null;
 
         try {
-            in = connection.getInputStream();
+            closeQuietly(connection.getInputStream());
         } catch (final IOException e) {
-            logger.log(Level.WARNING, e, () -> String.format("[%s] Connection.getInputStream() threw an IOException:", Thread.currentThread().getName()));
-        } finally {
-            closeQuietly(in);
+            // logger.log(Level.WARNING, e, () -> String.format("[%s] Connection.getInputStream() threw an IOException:",
+            // Thread.currentThread().getName()));
         }
 
         closeQuietly(connection.getErrorStream());
@@ -236,8 +238,8 @@ public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Returns the {@code Message-Body} sent by the server or {@code null} if this response {@link #hasBody() does
-     * not have} a {@code Message-Body}.
+     * Returns the {@code Message-Body} sent by the server or {@code null} if this response {@link #hasBody() does not have}
+     * a {@code Message-Body}.
      * <p>
      * <b>Note:</b> Whether or not a {@code Message-Body} is buffered in the response is implementation dependent. Unless
      * otherwise stated, it should be assumed that the {@code ResponseBody} is <i>one-shot</i> stream backed by an active
@@ -248,13 +250,13 @@ public class HttpResponse implements AutoCloseable {
      * assuming <i>keep-alive</i> is on. All underlying streams will be closed when this response is {@link #close()
      * closed}.
      * 
-     * @return the {@code Message-Body} sent by the server or {@code null} if this response {@link #hasBody() does
-     *         not have} a {@code Message-Body}
+     * @return the {@code Message-Body} sent by the server or {@code null} if this response {@link #hasBody() does not have}
+     *         a {@code Message-Body}
      * @throws IOException   if an I/O error occurs
      * @throws HttpException if an error occurs when communicating with the remote resource
      */
     public ResponseBody getBody() throws HttpException, IOException {
-        if (isSuccessStatusCode())
+        if (isSuccessful())
             return responseBody;
         else
             throw new HttpException(getStatusLine()).setErrorMessage(getErrorMessage()).setResponseHeaders(getHeaders()).setStatusCode(getStatusCode()).setURL(from());
@@ -265,8 +267,7 @@ public class HttpResponse implements AutoCloseable {
      * {@link #getStatusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid HTTP).
      * 
      * @return the {@code Reason-Phrase}, if any, parsed alongside the {@link #getStatusCode() Status-Code} from the
-     *         {@link #getStatusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid
-     *         HTTP)
+     *         {@link #getStatusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid HTTP)
      */
     public String getReasonPhrase() {
         return reasonPhrase;
@@ -366,14 +367,14 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return {@code true} if the response contains a 2xx {@link #getStatusCode() Status-Code}, else {@code false}
      */
-    public boolean isSuccessStatusCode() {
+    public boolean isSuccessful() {
         return statusCode >= 200 && statusCode < 300;
     }
 
     /**
      * Override {@link #getContentCharset() Content-Type} charset returned by the server. Calling this method will ensure
-     * {@link #getBody() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset
-     * to parse the {@code Message-Body}.
+     * {@link #getBody() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset to
+     * parse the {@code Message-Body}.
      * <p>
      * As stated in <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5" target="_blank">RFC-7231</a>: <i>In
      * practice, resource owners do not always properly configure their origin server to provide the correct Content-Type

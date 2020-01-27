@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * An exception thrown when attempting to read the {@code Message-Body} of an HTTP response which contains an error
- * {@link HttpResponse#isSuccessStatusCode() Status-Code}.
+ * An exception thrown if an attempt to send to or read from an HTTP server results in
+ * {@link HttpResponse#isSuccessful() error}.
  * 
  * @author Zhenya Leonov
  */
@@ -150,7 +150,7 @@ public class HttpException extends IOException {
      * 
      * @return the {@code URL} responsible for this exception or {@code null} if it is not available or not known
      */
-    public URL getURL() {
+    public URL from() {
         return url;
     }
 
