@@ -33,6 +33,8 @@ public class ByteArrayRequestBody implements RequestBody {
     private final int offset;
     private final int length;
 
+    private String contentType = null;
+
     /**
      * Constructs a new {@code ByteArrayRequestBody} using the given byte array as the backing buffer.
      * 
@@ -124,6 +126,15 @@ public class ByteArrayRequestBody implements RequestBody {
     @Override
     public InputStream getInputStream() throws IOException {
         return new ByteArrayInputStream(bytes, offset, length);
+    }
+
+    String getContentType() {
+        return contentType;
+    }
+
+    ByteArrayRequestBody setContentType(final String type) {
+        this.contentType = type;
+        return this;
     }
 
 }

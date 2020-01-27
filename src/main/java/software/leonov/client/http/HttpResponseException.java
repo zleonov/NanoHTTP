@@ -21,12 +21,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * An exception thrown if an attempt to send to or read from an HTTP server results in
- * {@link HttpResponse#isSuccessful() error}.
+ * Thrown when an HTTP response contains an {@link HttpResponse#isSuccessful() error}
+ * {@link HttpResponse#getStatusCode() Status-Code}.
  * 
  * @author Zhenya Leonov
  */
-public class HttpException extends IOException {
+public class HttpResponseException extends IOException {
 
     private static final long serialVersionUID = 1016328592873099463L;
 
@@ -40,7 +40,7 @@ public class HttpException extends IOException {
      *
      * @param message the detail message or {@code null}
      */
-    public HttpException(final String message) {
+    public HttpResponseException(final String message) {
         super(message, null);
     }
 
@@ -50,7 +50,7 @@ public class HttpException extends IOException {
      * @param message the detail message or {@code null}
      * @param cause   the cause, which can be later retrieved by {@link #getCause()} or {@code null}
      */
-    public HttpException(final String message, final Throwable cause) {
+    public HttpResponseException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
@@ -60,7 +60,7 @@ public class HttpException extends IOException {
      * @param errorMessage the error message returned from the server or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpException setErrorMessage(final String errorMessage) {
+    HttpResponseException setErrorMessage(final String errorMessage) {
         this.errorMessage = errorMessage;
         return this;
     }
@@ -71,7 +71,7 @@ public class HttpException extends IOException {
      * @param responseHeaders the response headers sent by the server or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpException setResponseHeaders(final Map<String, List<String>> responseHeaders) {
+    HttpResponseException setHeaders(final Map<String, List<String>> responseHeaders) {
         this.responseHeaders = responseHeaders;
         return this;
     }
@@ -82,7 +82,7 @@ public class HttpException extends IOException {
      * @param statusCode the {@code Status-Code} return by the server or -1
      * @return this {@code HttpException} instance
      */
-    HttpException setStatusCode(final int statusCode) {
+    HttpResponseException setStatusCode(final int statusCode) {
         this.statusCode = statusCode;
         return this;
     }
@@ -93,7 +93,7 @@ public class HttpException extends IOException {
      * @param url the {@code URL} responsible for this exception or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpException setURL(final URL url) {
+    HttpResponseException from(final URL url) {
         this.url = url;
         return this;
     }
@@ -117,7 +117,7 @@ public class HttpException extends IOException {
      * @return an unmodifiable {@code Map} of the response headers sent by the server or {@code null} if they are not
      *         available or not known
      */
-    public Map<String, List<String>> getResponseHeaders() {
+    public Map<String, List<String>> getHeaders() {
         return responseHeaders;
     }
 

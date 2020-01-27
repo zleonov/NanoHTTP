@@ -81,19 +81,41 @@ public final class HttpRequestWithBody extends HttpRequest {
 
     /**
      * Sends the HTTP request.
+     * <p>
+     * Unlike {@link HttpRequest#send()} {@code DELETE}, {@code POST}, and {@code PUT} requests will result in an immediate
+     * {@link HttpResponseException} if the HTTP response contains an {@link HttpResponse#isSuccessful() error}
+     * {@link HttpResponse#getStatusCode() Status-Code}.
+     * <p>
+     * If the {@code Message-Body} is being sent using {@link GZipEncoding} and the {@link #setContentType(String)
+     * Content-Encoding} header has not already been set it will automatically be set to a value of {@code gzip}.
+     * <p>
+     * If the {@code Message-Body} length is known, and the {@link #setContentLength(long) Content-Length} has not already
+     * been set, it will automatically be updated.
+     * <p>
+     * If the {@code Message-Body} {@link #setContentType(String) Content-Type} is known, and has not already been set, it
+     * will automatically be updated.
      * 
      * @return the response from the server
-     * @throws HttpException if the HTTP server reported an error
-     * @throws IOException   if any other I/O error occurs
+     * @throws HttpResponseException if the HTTP server reported an error
+     * @throws IOException           if any other I/O error occurs
      */
     @Override
     public HttpResponse send() throws IOException {
 
-//        if (isAcceptGZipEncoding())
-//            setIfNotSet("Accept-Encoding", "gzip");
-
         if (body != null) {
             connection.setDoOutput(true);
+
+            if (body instanceof GZipEncoding)
+                setIfNotSet("Content-Encoding", "gzip");
+
+            if (length < 0)
+                if (body instanceof ByteArrayRequestBody)
+                    length = ((ByteArrayRequestBody) body).length();
+                else if (body instanceof GZipEncoding)
+                    length = ((GZipEncoding) body).length();
+
+            if (body instanceof ByteArrayRequestBody && getContentType() == null && ((ByteArrayRequestBody) body).getContentType() != null)
+                setContentType(((ByteArrayRequestBody) body).getContentType());
 
             if (length >= 0)
                 connection.setFixedLengthStreamingMode(length);

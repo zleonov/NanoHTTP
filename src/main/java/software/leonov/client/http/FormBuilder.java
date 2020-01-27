@@ -46,7 +46,6 @@ final public class FormBuilder {
     /**
      * The {@code Content-Type} constant: {@code application/x-www-form-urlencoded}
      */
-    public static final String APPLICATION_FORM_URLENCODED = "application/x-www-form-urlencoded";
 
     private final StringBuilder buffer = new StringBuilder();
 
@@ -118,7 +117,7 @@ final public class FormBuilder {
      *         the UTF-8 charset
      */
     public ByteArrayRequestBody build() {
-        return ByteArrayRequestBody.encode(toString(), StandardCharsets.UTF_8);
+        return ByteArrayRequestBody.encode(toString(), StandardCharsets.UTF_8).setContentType("application/x-www-form-urlencoded");
     }
 
 }

@@ -65,7 +65,7 @@ public class HttpResponse implements AutoCloseable {
     private final long expiration;
     private final long ifModifiedSince;
 
-    private final ResponseBody responseBody;
+    private final ResponseBody body;
 
     private final Map<String, List<String>> responseHeaders;
 
@@ -105,10 +105,10 @@ public class HttpResponse implements AutoCloseable {
                 }
         }
 
-        if (!isSuccessful() && connection.getRequestMethod().equals("PUT") || connection.getRequestMethod().equals("POST") || connection.getRequestMethod().equals("DELETE"))
-            throw new HttpException(getStatusLine()).setErrorMessage(getErrorMessage()).setResponseHeaders(getHeaders()).setStatusCode(getStatusCode()).setURL(from());
+        if (!isSuccessful() && ("POST".equals(connection.getRequestMethod()) || "PUT".equals(connection.getRequestMethod()) || "DELETE".equals(connection.getRequestMethod())))
+            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
 
-        responseBody = isSuccessful() && hasBody() ? new AbstractResponseBody(getContentCharset()) {
+        body = isSuccessful() && hasBody() ? new AbstractResponseBody(getContentCharset()) {
 
             @Override
             public InputStream getInputStream() throws IOException {
@@ -253,13 +253,13 @@ public class HttpResponse implements AutoCloseable {
      * @return the {@code Message-Body} sent by the server or {@code null} if this response {@link #hasBody() does not have}
      *         a {@code Message-Body}
      * @throws IOException   if an I/O error occurs
-     * @throws HttpException if an error occurs when communicating with the remote resource
+     * @throws HttpResponseException if an error occurs when communicating with the remote resource
      */
-    public ResponseBody getBody() throws HttpException, IOException {
+    public ResponseBody getBody() throws HttpResponseException, IOException {
         if (isSuccessful())
-            return responseBody;
+            return body;
         else
-            throw new HttpException(getStatusLine()).setErrorMessage(getErrorMessage()).setResponseHeaders(getHeaders()).setStatusCode(getStatusCode()).setURL(from());
+            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
     }
 
     /**

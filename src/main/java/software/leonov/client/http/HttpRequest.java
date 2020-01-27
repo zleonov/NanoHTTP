@@ -42,7 +42,6 @@ import javax.net.ssl.SSLSocketFactory;
 public class HttpRequest {
 
     protected final HttpURLConnection connection;
-   // private boolean acceptGZipEncoding = false;
 
     protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) throws IOException {
 
@@ -62,55 +61,14 @@ public class HttpRequest {
         }
 
         connection.setDoOutput(false);
-
     }
 
-//    /**
-//     * Adds a request header.
-//     * <p>
-//     * <b>NOTE:</b> Use this method if you want to set multiple values to the same header.
-//     * <p>
-//     * Staring with Java 7 the following
-//     * <a href="https://fetch.spec.whatwg.org/#forbidden-header-name" target="_blank">restricted</a> headers cannot be
-//     * modified or retrieved by the user (changing their values is a no-op) for security reasons:
-//     * 
-//     * <pre>
-//     * Access-Control-Request-Headers
-//     * Access-Control-Request-Method
-//     * Connection (<i>close</i> is allowed)
-//     * Content-Length
-//     * Content-Transfer-Encoding
-//     * Host
-//     * Keep-Alive
-//     * Origin
-//     * Trailer
-//     * Transfer-Encoding
-//     * Upgrade
-//     * Via
-//     * Sec-XXXX (any header starting with <i>Sec-</i>)
-//     * </pre>
-//     * 
-//     * Setting the {@code sun.net.http.allowRestrictedHeaders} system property to {@code true} will revert to previous
-//     * behavior.
-//     * 
-//     * @param name  the header name
-//     * @param value the header value
-//     * @return this {@code HttpRequest} instance
-//     */
-//    public HttpRequest addRequestHeader(final String name, final String value) {
-//        if (name == null)
-//            throw new NullPointerException("name == null");
-//        if (value == null)
-//            throw new NullPointerException("value == null");
-//
-//        connection.addRequestProperty(name, value);
-//        return this;
-//    }
-
     /**
-     * Returns the timeout to be used when connecting to the resource referenced by this request or {@code null} if it is not specified.
+     * Returns the timeout to be used when connecting to the resource referenced by this request or {@code null} if it is
+     * not specified.
      * 
-     * @return the timeout to be used when connecting to the resource referenced by this request or {@code null} if it is not specified
+     * @return the timeout to be used when connecting to the resource referenced by this request or {@code null} if it is
+     *         not specified
      */
     public Duration getConnectTimeout() {
         final int timeout = connection.getConnectTimeout();
@@ -185,22 +143,14 @@ public class HttpRequest {
     /**
      * Returns the {@code User-Agent} HTTP request header or {@code null} if it is not specified.
      * <p>
-     * If the {@code User-Agent} is not specified when this request is executed it will be set automatically by the underlying {@code URLConnection}.
+     * If the {@code User-Agent} is not specified when this request is executed it will be set automatically by the
+     * underlying {@code URLConnection}.
      * 
      * @return the {@code User-Agent} HTTP request header or {@code null} if it is not specified
      */
     public String getUserAgent() {
         return getHeader("User-Agent");
     }
-
-//    /**
-//     * Returns whether or not GZip compression is accepted in the {@code HttpResponse}.
-//     * 
-//     * @return whether or not GZip compression is accepted in the {@code HttpResponse}
-//     */
-//    public boolean isAcceptGZipEncoding() {
-//        return acceptGZipEncoding;
-//    }
 
     /**
      * Returns whether or not automatic HTTP redirection (requests with response code 3xx) is enabled.
@@ -222,14 +172,15 @@ public class HttpRequest {
 
     /**
      * Sends the HTTP request.
+     * <p>
+     * For {@code GET}, {@code HEAD}, {@code OPTIONS}, and {@code TRACE} requests, an {@link HttpResponseException} will not be
+     * thrown if the HTTP response contains an {@link HttpResponse#isSuccessful() error} {@link HttpResponse#getStatusCode()
+     * Status-Code} until attempts to read the {@link HttpResponse#getBody() Message-Body} are made.
      * 
      * @return the response from the server
      * @throws IOException if an I/O error occurs
      */
     public HttpResponse send() throws IOException {
-
-//        if (isAcceptGZipEncoding())
-//            setIfNotSet("Accept-Encoding", "gzip");
 
         try {
             connection.connect();
@@ -240,21 +191,6 @@ public class HttpRequest {
             throw e;
         }
     }
-
-//    /**
-//     * Enables or disables GZip compression in the {@code HttpResponse}. When enabled the {@code Accept-Encoding} header
-//     * will contain a value of {@code gzip}. This is the most common HTTP compression format.
-//     * <p>
-//     * The HTTP/1.1 standard also recommends that the servers supporting this {@code Content-Encoding} should recognize
-//     * {@code x-gzip} as an alias, for compatibility purposes.
-//     * 
-//     * @param acceptGZipEncoding whether or not to enable GZip compression in the {@code HttpResponse}
-//     * @return this {@code HttpRequest} instance
-//     */
-//    public HttpRequest setAcceptGZipEncoding(final boolean acceptGZipEncoding) {
-//        this.acceptGZipEncoding = acceptGZipEncoding;
-//        return this;
-//    }
 
     /**
      * Allows this request to be authenticated using the "Basic" HTTP authentication scheme.
@@ -386,7 +322,7 @@ public class HttpRequest {
         connection.setRequestProperty(name, value);
         return this;
     }
-    
+
     /**
      * Returns the target {@code URL} of this request.
      * 
@@ -432,27 +368,10 @@ public class HttpRequest {
         return this;
     }
 
-//    private static final Pattern GZIP_PATTERN = Pattern.compile("(?i)\\bgzip\\b"); // https://tools.ietf.org/html/rfc7231#section-3.1.2.1 Accept-Encoding values are case-insensitive
-//
-//    protected void setIfNotSetAcceptGZipEncoding() {
-//        final String value = getRequestHeader("Accept-Encoding");
-//
-//        if (value == null || !GZIP_PATTERN.matcher(value).find())
-//            setHeader("Accept-Encoding", "gzip");
-//    }
-//
-//    protected void setIfNotSet(final String name, final String value) {
-//        setIfNotSet(name, value, false);
-//    }
-//    
-//    protected void setIfNotSet(final String name, final String value, final boolean caseInsensitive) {
-//       final Pattern pattern = Pattern.compile("\\b" + value + "\\b", caseInsensitive ? Pattern.CASE_INSENSITIVE : 0);
-//       
-//       final String prev = getRequestHeader(name);
-//
-//       if (prev == null || !pattern.matcher(prev).find())
-//           setHeader(name, value);
-//        
-//    }
+    protected void setIfNotSet(final String name, final String value) {
+
+        if (getHeader(name) == null)
+            setHeader(name, value);
+    }
 
 }

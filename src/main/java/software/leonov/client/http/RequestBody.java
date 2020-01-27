@@ -40,8 +40,8 @@ public interface RequestBody {
     public InputStream getInputStream() throws IOException;
 
     /**
-     * Writes this {@code Message-Body} to the specified output stream. Closes the input stream. Does not close the output
-     * stream.
+     * Writes this {@code Message-Body} to the specified output stream. Closes the {@link #getInputStream() input stream}.
+     * Does not close the output stream.
      * <p>
      * The default implementation writes all bytes from the {@link #getInputStream() input stream} to the output stream.
      * 
