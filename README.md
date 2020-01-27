@@ -12,34 +12,39 @@ NanoHTTP is a paper-thin wrapper around *HttpURLConnection* with a user friendly
 
 ```java
 // A simple GET request
-final URL resource = ...
-final String text = HttpClient.defaultClient().get(resource).send().getBody().asString();
+final String address = ...
+try (final HttpResponse response = HttpClient.defaultClient().get(new URL(address)).send()){
+   System.out.println(response.getBody().asString());
+}
 ```
-```
+```java
 // Send HTTP form content
-final URL resource = ...
-HttpClient.defaultClient().post(resource)
-                          .setContentType("application/x-www-form-urlencoded")
-                          .setBody(new FormBuilder().encode("param1", "value1").encode("param2", "value2").build())
-                          .send();
+final String address = ...
+try (final HttpResponse response = HttpClient.defaultClient()
+                                             .post(new URL(address))
+                                             .setContentType("application/x-www-form-urlencoded")
+                                             .setBody(new FormBuilder().encode("param1", "value1")
+                                                                       .encode("param2", "value2")
+                                                                       .build())
+                                             .send())
+{
+   System.out.println(response.getStatusLine());
+}
 ```
-```
-// Send HTTP form content
-final URL resource = ...
-HttpClient.defaultClient().post(resource)
-                          .setContentType("application/x-www-form-urlencoded")
-                          .setBody(new FormBuilder().encode("param1", "value1").encode("param2", "value2").build())
-                          .send();
-```
-```
+```java
 // Send an audio FLAC file using GZip compression
-final URL resource = ...
+final String address = ...
 final Path song = ...
-HttpClient.defaultClient().post(new URL("https://www.google.com"))
-                          .setContentType("audio/x-flac; rate=16000")
-                          .setContentEncoding("gzip")
-                          .setBody(GZipEncoding.stream(() -> Files.newInputStream(song)))
-                          .send();
+try (final HttpResponse response = HttpClient.defaultClient()
+                                             .post(new URL(address))
+                                             .setContentType("audio/x-flac; rate=16000")
+                                             .setContentEncoding("gzip")
+                                             .setBody(GZipEncoding.stream(() -> Files.newInputStream(song)))
+                                             .send())
+{
+   System.out.println(response.getStatusLine());
+}
+
 ```
 
 Goals
