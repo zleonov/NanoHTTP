@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A {@code RequestBody} backed by a byte array buffer.
@@ -62,6 +63,18 @@ public class ByteArrayRequestBody implements RequestBody {
         this.bytes = bytes;
         this.offset = offset;
         this.length = length;
+    }
+
+    /**
+     * Returns a new {@code ByteArrayRequestBody} whose buffer is {@link String#getBytes(Charset) encoded} from the
+     * specified string using the UTF-8 charset.
+     * 
+     * @param body the string to encode
+     * @return a new {@code ByteArrayRequestBody} whose buffer is {@link String#getBytes(Charset) encoded} from the
+     *         specified string using the UTF-8 charset
+     */
+    public static ByteArrayRequestBody encode(final String body) {
+        return new ByteArrayRequestBody(body.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
