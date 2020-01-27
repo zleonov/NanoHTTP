@@ -14,7 +14,8 @@ NanoHTTP is a paper-thin wrapper around *HttpURLConnection* with a user friendly
 // A simple GET request
 final URL resource = ...
 try (final HttpResponse response = HttpClient.defaultClient().get(resource).send()){
-   System.out.println(response.getBody().asString());
+   final String text = response.getBody().asString();
+   ...
 }
 ```
 ```java
@@ -26,7 +27,7 @@ try (final HttpResponse response = HttpClient.defaultClient()
                                              .setBody(body) // Content-Type: application/x-www-form-urlencoded will be automatically set
                                              .send())
 {
-   System.out.println(response.getStatusLine());
+   ...
 }
 ```
 ```java
@@ -39,7 +40,7 @@ try (final HttpResponse response = HttpClient.defaultClient()
                                              .setBody(GZipEncoding.stream(() -> Files.newInputStream(song))) // Content-Encoding: gzip will be automatically set, InputStream will be automatically closed
                                              .send())
 {
-   System.out.println(response.getStatusLine());
+   ...
 }
 
 ```
@@ -72,7 +73,7 @@ Why another HTTP Client?
 ========================
 It's true that there are more than several HTTP Client libraries flowing around the Java ecosystem. But there are several features that make NanoHTTP unique.
 
-First, it has **zero dependencies**. Second, it matches the behavior of *HttpURLConnection*, which makes it ideal to upgrade code written with *HttpURLConnection* idiosyncrasies in mind. Third, did we mention **zero dependencies**?
+First, it has **zero dependencies**. Second, it matches the behavior of *HttpURLConnection*, which makes it ideal to upgrade code written with *HttpURLConnection* idiosyncrasies in mind. Third, did I mention **zero dependencies**?
 
 But if you want something more?
 ===============================
@@ -80,7 +81,7 @@ Here are some popular production-grade HTTP Clients:
 - [JDK HttpClient](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html): A modern HTTP Client that supports both HTTP/1.1 and HTTP/2, added in Java 11 (incubator module in Java 9) 
 - [OkHttp](https://square.github.io/okhttp/): An HTTP Client for Android, Kotlin, and Java
 - [google-http-java-Client](https://googleapis.github.io/google-http-java-client/): Google HTTP Client Library for Java and Android
-- [Unirest for Java](http://kong.github.io/unirest-java/): A Simplified, lightweight HTTP Client library
+- [Unirest for Java](http://kong.github.io/unirest-java/): A simplified, lightweight HTTP Client library
 - [Jetty HTTP Client](https://www.eclipse.org/jetty/documentation/current/http-client-api.html): An efficient HTTP Client with a simple API that supports both asynchronous,  non-blocking, as well as synchronous, and blocking requests.
 
 What's next?
