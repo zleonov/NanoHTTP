@@ -11,8 +11,35 @@ Traditionally, if you wanted to do an HTTP call in Java, you had to use the [Htt
 NanoHTTP is a paper-thin wrapper around *HttpURLConnection* with a user friendly API. Do yourself a favor and start making HTTP calls like this:
 
 ```java
+// A simple GET request
 final URL resource = ...
 final String text = HttpClient.defaultClient().get(resource).send().getBody().asString();
+```
+```
+// Send HTTP form content
+final URL resource = ...
+HttpClient.defaultClient().post(resource)
+                          .setContentType("application/x-www-form-urlencoded")
+                          .setBody(new FormBuilder().encode("param1", "value1").encode("param2", "value2").build())
+                          .send();
+```
+```
+// Send HTTP form content
+final URL resource = ...
+HttpClient.defaultClient().post(resource)
+                          .setContentType("application/x-www-form-urlencoded")
+                          .setBody(new FormBuilder().encode("param1", "value1").encode("param2", "value2").build())
+                          .send();
+```
+```
+// Send an audio FLAC file using GZip compression
+final URL resource = ...
+final Path song = ...
+HttpClient.defaultClient().post(new URL("https://www.google.com"))
+                          .setContentType("audio/x-flac; rate=16000")
+                          .setContentEncoding("gzip")
+                          .setBody(GZipEncoding.stream(() -> Files.newInputStream(song)))
+                          .send();
 ```
 
 Goals
