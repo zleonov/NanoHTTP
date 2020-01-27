@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2020 Zhenya Leonov
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package software.leonov.client.http;
 
 import java.io.IOException;
@@ -24,19 +39,19 @@ public final class HttpRequestWithBody extends HttpRequest {
     }
 
     /**
-     * Returns the value {@code Content-Encoding} request header, or {@code null} if it is not specified
+     * Returns the value {@code Content-Encoding} request header or {@code null} if it is not specified
      * 
-     * @param the value of the {@code Content-Encoding} header, or {@code null} if it is not specified
+     * @param the value of the {@code Content-Encoding} header or {@code null} if it is not specified
      * @return this {@code HttpRequest} instance
      */
     public String getContentEncoding() {
-        return super.getRequestHeader("Content-Encoding");
+        return super.getHeader("Content-Encoding");
     }
 
     /**
-     * Returns the value {@code Content-Length} request header, or -1 if it is not specified.
+     * Returns the value {@code Content-Length} request header or -1 if it is not specified.
      * 
-     * @param the value of the {@code Content-Length} header, or -1 if it is not specified
+     * @param the value of the {@code Content-Length} header or -1 if it is not specified
      * @return this {@code HttpRequest} instance
      */
     public long getContentLength() {
@@ -44,23 +59,23 @@ public final class HttpRequestWithBody extends HttpRequest {
     }
 
     /**
-     * Returns the value {@code Content-Type} request header, or {@code null} if it is not specified.
+     * Returns the value {@code Content-Type} request header or {@code null} if it is not specified.
      * 
-     * @param the value of the {@code Content-Type} header, or {@code null} if it is not specified
+     * @param the value of the {@code Content-Type} header or {@code null} if it is not specified
      * @return this {@code HttpRequest} instance
      */
     public String getContentType() {
-        return super.getRequestHeader("Content-Type");
+        return super.getHeader("Content-Type");
     }
 
     /**
-     * Returns the {@code Message-Body} to send to the server, or {@code null} if it is not specified.
+     * Returns the {@code Message-Body} to send to the server or {@code null} if it is not specified.
      * 
-     * @param body the {@code Message-Body} to send to the server, or {@code null} if it is not specified
+     * @param body the {@code Message-Body} to send to the server or {@code null} if it is not specified
      * @return this {@code HttpRequest} instance
      * @throws IOException if an I/O error occurs
      */
-    public RequestBody getMessageBody() {
+    public RequestBody getBody() {
         return body;
     }
 
@@ -73,8 +88,8 @@ public final class HttpRequestWithBody extends HttpRequest {
     @Override
     public HttpResponse send() throws IOException {
 
-        if (isAcceptGZipEncoding())
-            setIfNotSet("Accept-Encoding", "gzip");
+//        if (isAcceptGZipEncoding())
+//            setIfNotSet("Accept-Encoding", "gzip");
 
         if (body != null) {
             connection.setDoOutput(true);
@@ -105,7 +120,7 @@ public final class HttpRequestWithBody extends HttpRequest {
         if (encoding == null)
             throw new NullPointerException("encoding == null");
 
-        this.setRequestHeader("Content-Encoding", encoding);
+        this.setHeader("Content-Encoding", encoding);
         return this;
     }
 
@@ -137,7 +152,7 @@ public final class HttpRequestWithBody extends HttpRequest {
         if (type == null)
             throw new NullPointerException("type == null");
 
-        this.setRequestHeader("Content-Type", type);
+        this.setHeader("Content-Type", type);
         return this;
     }
 
@@ -148,7 +163,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      * @throws IOException if an I/O error occurs
      */
-    public HttpRequestWithBody setMessageBody(final RequestBody body) throws IOException {
+    public HttpRequestWithBody setBody(final RequestBody body) throws IOException {
         if (body == null)
             throw new NullPointerException("body = null");
 
