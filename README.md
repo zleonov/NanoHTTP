@@ -82,12 +82,12 @@ Third, did we mention **zero dependencies**?
 But if you want something more?
 ===============================
 Here are some production grade HTTP Clients that I recommend:
-- [JDK HttpClient](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html) A modern HTTP Client that supports both HTTP/1.1 and HTTP/2, added in Java 11 (incubator module in Java 9) 
+- [JDK HttpClient](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html): A modern HTTP Client that supports both HTTP/1.1 and HTTP/2, added in Java 11 (incubator module in Java 9) 
 - [OkHttp](https://square.github.io/okhttp/): An HTTP Client for Android, Kotlin, and Java
 - [google-http-java-Client](https://googleapis.github.io/google-http-java-Client/): Google HTTP Client Library for Java and Android
-- [Unirest for Java](http://kong.github.io/unirest-java/) A Simplified, lightweight HTTP Client library
-- [Apache HttpComponents](https://hc.apache.org/index.html) Java components focused on HTTP and associated protocols including HttpClient and HttpAsyncClient
-- [Jetty HTTP Client](https://www.eclipse.org/jetty/documentation/current/http-client-api.html) An efficient HTTP Client with a simple API that supports both asynchronous,  non-blocking, as well as synchronous, and blocking requests.
+- [Unirest for Java](http://kong.github.io/unirest-java/): A Simplified, lightweight HTTP Client library
+- [Apache HttpComponents](https://hc.apache.org/index.html): Java components focused on HTTP and associated protocols including HttpClient and HttpAsyncClient
+- [Jetty HTTP Client](https://www.eclipse.org/jetty/documentation/current/http-client-api.html): An efficient HTTP Client with a simple API that supports both asynchronous,  non-blocking, as well as synchronous, and blocking requests.
 
 What's next?
 ============
