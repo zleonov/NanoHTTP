@@ -18,32 +18,6 @@ try (final HttpResponse response = HttpClient.defaultClient().get(resource).send
    ...
 }
 ```
-```java
-// Send HTTP form content
-final URL resource = ...
-final RequestBody body = new FormBuilder().encode("param", "value").build());
-try (final HttpResponse response = HttpClient.defaultClient()
-                                             .post(resource)
-                                             .setBody(body) // Content-Type: application/x-www-form-urlencoded will be automatically set
-                                             .send())
-{
-   ...
-}
-```
-```java
-// Send an audio FLAC file using GZip compression
-final URL resource = ...
-final Path file = ...
-try (final HttpResponse response = HttpClient.defaultClient()
-                                             .post(resource)
-                                             .setContentType("audio/x-flac; rate=16000")
-                                             .setBody(GZipEncoding.stream(() -> Files.newInputStream(file))) // Content-Encoding: gzip will be automatically set, InputStream will be automatically closed
-                                             .send())
-{
-   ...
-}
-
-```
 
 Goals
 =====
@@ -78,7 +52,7 @@ Since NanoHTTP closely matches the behavior of *HttpURLConnection*, it is ideal 
 But if you want something more?
 ===============================
 Here are some popular production-grade HTTP Clients:
-- [JDK HttpClient](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html): A modern HTTP Client that supports both HTTP/1.1 and HTTP/2, added in Java 11 (incubator module in Java 9) 
+- [JDK HttpClient](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html): A modern HTTP Client that supports both HTTP/1.1 and HTTP/2, added in Java 11 (as incubator module in Java 9) 
 - [OkHttp](https://square.github.io/okhttp/): An HTTP Client for Android, Kotlin, and Java
 - [google-http-java-Client](https://googleapis.github.io/google-http-java-client/): Google HTTP Client Library for Java and Android
 - [Unirest for Java](http://kong.github.io/unirest-java/): A simplified, lightweight HTTP Client library
