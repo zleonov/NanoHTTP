@@ -36,7 +36,7 @@ public class ByteArrayRequestBody implements RequestBody {
     private String contentType = null;
 
     /**
-     * Constructs a new {@code ByteArrayRequestBody} using the given byte array as the backing buffer.
+     * Constructs a new {@code ByteArrayRequestBody} using the specified byte array as the backing buffer.
      * 
      * @param bytes the backing byte array buffer
      */
@@ -45,7 +45,7 @@ public class ByteArrayRequestBody implements RequestBody {
     }
 
     /**
-     * Constructs a new {@code ByteArrayRequestBody} using the given byte array with the specified {@code offset} and
+     * Constructs a new {@code ByteArrayRequestBody} using the specified byte array with the specified {@code offset} and
      * {@code length} as the backing buffer.
      * 
      * @param bytes  the byte array buffer
@@ -102,8 +102,14 @@ public class ByteArrayRequestBody implements RequestBody {
      * 
      * @return the length of the backing byte array buffer
      */
-    public int length() {
+    @Override
+    public long getLength() {
         return length;
+    }
+
+    @Override
+    public String getType() {
+        return contentType;
     }
 
     /**
@@ -128,11 +134,7 @@ public class ByteArrayRequestBody implements RequestBody {
         return new ByteArrayInputStream(bytes, offset, length);
     }
 
-    String getContentType() {
-        return contentType;
-    }
-
-    ByteArrayRequestBody setContentType(final String type) {
+    ByteArrayRequestBody setType(final String type) {
         this.contentType = type;
         return this;
     }

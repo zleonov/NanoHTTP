@@ -26,6 +26,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -105,11 +106,23 @@ public class HttpResponse implements AutoCloseable {
         if (!isSuccessful() && ("POST".equals(connection.getRequestMethod()) || "PUT".equals(connection.getRequestMethod()) || "DELETE".equals(connection.getRequestMethod())))
             throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
 
-        body = isSuccessful() && hasBody ? new AbstractResponseBody(getContentCharset()) {
+        body = isSuccessful() && hasBody ? new ResponseBody() {
+            
+            final Charset charset = getContentCharset();
 
             @Override
             public InputStream getInputStream() throws IOException {
                 return unzip(connection.getInputStream());
+            }
+
+            @Override
+            public String asString() throws IOException {
+                return new String(toByteArray(), charset);
+            }
+
+            @Override
+            public byte[] toByteArray() throws IOException {
+                return HttpResponse.toByteArray(getInputStream());
             }
         } : null;
 
@@ -120,14 +133,20 @@ public class HttpResponse implements AutoCloseable {
      */
     @Override
     public void close() {
+        
+        final byte[] buffer = new byte[8192];
 
         try {
-            connection.getInputStream().close();
+            final InputStream in = connection.getInputStream();
+            // while (in.read(buffer) != -1);
+            in.close();
         } catch (final IOException e) {
         }
 
         try {
-            connection.getErrorStream().close();
+            final InputStream in = connection.getInputStream();
+            while (in.read(buffer) != -1);
+            in.close();
         } catch (final IOException e) {
         }
 
@@ -211,7 +230,7 @@ public class HttpResponse implements AutoCloseable {
      */
     public String getErrorMessage() throws IOException {
         final InputStream in = connection.getErrorStream();
-        return in == null ? null : new String(AbstractResponseBody.toByteArray(unzip(in)), getContentCharset());
+        return in == null ? null : new String(toByteArray(unzip(in)), getContentCharset());
     }
 
     /**
@@ -400,6 +419,27 @@ public class HttpResponse implements AutoCloseable {
             return new DeflaterInputStream(in);
         else
             return in;
+    }
+    
+    static byte[] toByteArray(final InputStream in) throws IOException {
+
+        int length = 8192;
+
+        byte[] bytes = new byte[length];
+        int total = 0;
+        int n;
+
+        do {
+            while ((n = in.read(bytes, total, length - total)) > 0)
+                total += n;
+
+            if ((n = in.read()) != -1) {
+                bytes = Arrays.copyOf(bytes, (length *= 2) > Integer.MAX_VALUE ? Integer.MAX_VALUE : length);
+                bytes[total++] = (byte) n;
+            }
+        } while (n != -1);
+
+        return bytes.length == total ? bytes : Arrays.copyOf(bytes, total);
     }
 
 }

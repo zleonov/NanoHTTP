@@ -117,7 +117,7 @@ final public class FormBuilder {
      *         the UTF-8 charset
      */
     public ByteArrayRequestBody build() {
-        return ByteArrayRequestBody.encode(toString(), StandardCharsets.UTF_8).setContentType("application/x-www-form-urlencoded");
+        return ByteArrayRequestBody.encode(toString(), StandardCharsets.UTF_8).setType("application/x-www-form-urlencoded");
     }
 
 }

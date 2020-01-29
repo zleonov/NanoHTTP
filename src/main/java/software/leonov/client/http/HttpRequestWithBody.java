@@ -32,7 +32,7 @@ import javax.net.ssl.SSLSocketFactory;
 public final class HttpRequestWithBody extends HttpRequest {
 
     private RequestBody body = null;
-    private long length = -1;
+    private long contentLength = -1;
 
     HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) throws IOException {
         super(method, url, proxy, hostnameVerifier, sslSocketFactory);
@@ -45,7 +45,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      */
     public String getContentEncoding() {
-        return super.getHeader("Content-Encoding");
+        return getHeader("Content-Encoding");
     }
 
     /**
@@ -55,7 +55,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      */
     public long getContentLength() {
-        return length;
+        return contentLength;
     }
 
     /**
@@ -65,7 +65,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      */
     public String getContentType() {
-        return super.getHeader("Content-Type");
+        return getHeader("Content-Type");
     }
 
     /**
@@ -87,13 +87,13 @@ public final class HttpRequestWithBody extends HttpRequest {
      * {@link HttpResponse#getStatusCode() Status-Code}.
      * <p>
      * If the {@code Message-Body} is being sent using {@link GZipEncoding} and the {@link #setContentType(String)
-     * Content-Encoding} header has not already been set it will automatically be set to a value of {@code gzip}.
+     * Content-Encoding} header has not already been set, it will automatically be set to a value of {@code gzip}.
      * <p>
-     * If the {@code Message-Body} length is known, and the {@link #setContentLength(long) Content-Length} has not already
-     * been set, it will automatically be updated.
+     * If the {@code Message-Body} {@link RequestBody#getLength() length} is known, and the {@link #setContentLength(long)
+     * Content-Length} header has not already been set, it will automatically be updated.
      * <p>
-     * If the {@code Message-Body} {@link #setContentType(String) Content-Type} is known, and has not already been set, it
-     * will automatically be updated.
+     * If the {@code Message-Body} {@link RequestBody#getType() type} is known, and the {@link #setContentType(String)
+     * Content-Type} header has not already been set, it will automatically be updated.
      * 
      * @return the response from the server
      * @throws HttpResponseException if the HTTP response contains an {@link HttpResponse#isSuccessful() error}
@@ -109,17 +109,14 @@ public final class HttpRequestWithBody extends HttpRequest {
             if (body instanceof GZipEncoding)
                 setIfNotSet("Content-Encoding", "gzip");
 
-            if (length < 0)
-                if (body instanceof ByteArrayRequestBody)
-                    length = ((ByteArrayRequestBody) body).length();
-                else if (body instanceof GZipEncoding)
-                    length = ((GZipEncoding) body).length();
+            if (contentLength < 0 && body.getLength() >= 0)
+                contentLength = body.getLength();
 
-            if (body instanceof ByteArrayRequestBody && getContentType() == null && ((ByteArrayRequestBody) body).getContentType() != null)
-                setContentType(((ByteArrayRequestBody) body).getContentType());
+            if (body.getType() != null)
+                setIfNotSet("Content-Type", body.getType());
 
-            if (length >= 0)
-                connection.setFixedLengthStreamingMode(length);
+            if (contentLength >= 0)
+                connection.setFixedLengthStreamingMode(contentLength);
             else
                 connection.setChunkedStreamingMode(0);
 
@@ -129,7 +126,8 @@ public final class HttpRequestWithBody extends HttpRequest {
                 connection.disconnect();
                 throw e;
             }
-        }
+        } else
+            connection.setFixedLengthStreamingMode(0); // Content-Length = 0
 
         return super.send();
     }
@@ -137,14 +135,14 @@ public final class HttpRequestWithBody extends HttpRequest {
     /**
      * Sets the {@code Content-Encoding} request header.
      * 
-     * @param encoding the value of the {@code Content-Encoding} header
+     * @param contentEncoding the value of the {@code Content-Encoding} header
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentEncoding(final String encoding) {
-        if (encoding == null)
-            throw new NullPointerException("encoding == null");
+    public HttpRequestWithBody setContentEncoding(final String contentEncoding) {
+        if (contentEncoding == null)
+            throw new NullPointerException("contentEncoding == null");
 
-        this.setHeader("Content-Encoding", encoding);
+        setHeader("Content-Encoding", contentEncoding);
         return this;
     }
 
@@ -155,28 +153,28 @@ public final class HttpRequestWithBody extends HttpRequest {
      * An exception will be thrown if the application attempts to write more data than the indicated {@code Content-Length},
      * or if the application closes the output stream before writing the indicated amount.
      * 
-     * @param length the value of the {@code Content-Length} header in bytes
+     * @param contentLength the value of the {@code Content-Length} header in bytes
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentLength(final long length) {
-        if (length < 0)
-            throw new IllegalArgumentException("length < 0");
+    public HttpRequestWithBody setContentLength(final long contentLength) {
+        if (contentLength < 0)
+            throw new IllegalArgumentException("contentLength < 0");
 
-        this.length = length;
+        this.contentLength = contentLength;
         return this;
     }
 
     /**
      * Sets the {@code Content-Type} request header.
      * 
-     * @param type the value of the {@code Content-Type} header
+     * @param contentType the value of the {@code Content-Type} header
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentType(final String type) {
-        if (type == null)
-            throw new NullPointerException("type == null");
+    public HttpRequestWithBody setContentType(final String contentType) {
+        if (contentType == null)
+            throw new NullPointerException("contentType == null");
 
-        this.setHeader("Content-Type", type);
+        setHeader("Content-Type", contentType);
         return this;
     }
 

@@ -40,6 +40,24 @@ public interface RequestBody {
     public InputStream getInputStream() throws IOException;
 
     /**
+     * Returns the content type of this {@code Message-Body} or {@code null} if it is not specified.
+     * 
+     * @return the content type of this {@code Message-Body} or {@code null} if it is not specified
+     */
+    default String getType() {
+        return null;
+    }
+
+    /**
+     * Returns the length of this {@code Message-Body} in bytes or or -1 if it is not specified.
+     * 
+     * @return the length of this {@code Message-Body} in bytes or or -1 if it is not specified
+     */
+    default long getLength() {
+        return -1;
+    }
+
+    /**
      * Writes this {@code Message-Body} to the specified output stream. Closes the {@link #getInputStream() input stream}.
      * Does not close the output stream.
      * <p>
