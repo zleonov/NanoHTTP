@@ -61,10 +61,10 @@ public class HttpResponse implements AutoCloseable {
     private final long ifModifiedSince;
 
     private final boolean hasBody;
-    
+
     private final ResponseBody body;
 
-    private final Map<String, List<String>> responseHeaders;
+    private final Map<String, List<String>> headers;
 
     private final int statusCode;
 
@@ -77,6 +77,7 @@ public class HttpResponse implements AutoCloseable {
         this.connection = connection;
 
         statusCode = connection.getResponseCode();
+
         contentLength = connection.getContentLengthLong();
         statusLine = connection.getHeaderField(0);
         reasonPhrase = connection.getResponseMessage();
@@ -84,9 +85,12 @@ public class HttpResponse implements AutoCloseable {
         contentEncoding = connection.getContentEncoding();
         from = connection.getURL();
 
-        final Map<String, List<String>> headers = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
-        connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
-        responseHeaders = Collections.unmodifiableMap(headers);
+        if (statusCode < 200 || statusCode >= 300)
+            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
+
+        final Map<String, List<String>> headerFields = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+        connection.getHeaderFields().forEach((name, values) -> headerFields.put(name, values));
+        headers = Collections.unmodifiableMap(headerFields);
 
         date = connection.getDate();
         expiration = connection.getExpiration();
@@ -100,19 +104,16 @@ public class HttpResponse implements AutoCloseable {
                 } catch (final IllegalCharsetNameException | UnsupportedCharsetException e) {
                 }
         }
-        
+
         hasBody = connection.getRequestMethod().equals("HEAD") || statusCode < 200 || statusCode == HTTP_NO_CONTENT || statusCode == HTTP_NOT_MODIFIED ? false : true;
 
-        if (!isSuccessful() && ("POST".equals(connection.getRequestMethod()) || "PUT".equals(connection.getRequestMethod()) || "DELETE".equals(connection.getRequestMethod())))
-            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
+        body = hasBody ? new ResponseBody() {
 
-        body = isSuccessful() && hasBody ? new ResponseBody() {
-            
             final Charset charset = getContentCharset();
 
             @Override
             public InputStream getInputStream() throws IOException {
-                return unzip(connection.getInputStream());
+                return filter(connection.getInputStream());
             }
 
             @Override
@@ -133,7 +134,7 @@ public class HttpResponse implements AutoCloseable {
      */
     @Override
     public void close() {
-        
+
         final byte[] buffer = new byte[8192];
 
         try {
@@ -145,7 +146,8 @@ public class HttpResponse implements AutoCloseable {
 
         try {
             final InputStream in = connection.getInputStream();
-            while (in.read(buffer) != -1);
+            while (in.read(buffer) != -1)
+                ;
             in.close();
         } catch (final IOException e) {
         }
@@ -221,19 +223,6 @@ public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Returns the error message when a request failed but the server sent useful data nonetheless or {@code null} if no
-     * error occurred or no error data was sent.
-     * 
-     * @return the error message when a request failed but the server sent useful data nonetheless or {@code null} if no
-     *         error occurred or no error data was sent
-     * @throws IOException if an I/O error occurs
-     */
-    public String getErrorMessage() throws IOException {
-        final InputStream in = connection.getErrorStream();
-        return in == null ? null : new String(toByteArray(unzip(in)), getContentCharset());
-    }
-
-    /**
      * Returns the value of the {@code Expires} header field or 0 if it is not known or already expired.
      * <p>
      * Returns the value of the {@code Expires} header field or 0 if it is not known or already expired
@@ -268,17 +257,10 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the {@code Message-Body} sent by the server or {@code null} if this response {@link #hasBody() does not have}
      *         a {@code Message-Body}
-     * @throws HttpResponseException if the HTTP response contains an {@link HttpResponse#isSuccessful() error}
-     *                               {@link HttpResponse#getStatusCode() Status-Code}
-     * @throws IOException           if any other I/O error occurs
+     * @throws IOException if any other I/O error occurs
      */
-    public ResponseBody getBody() throws HttpResponseException, IOException {
-        if (isSuccessful() || !hasBody())
-            return body;
-        else {
-            disconnect();
-            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
-        }
+    public ResponseBody getBody() throws IOException {
+        return body;
     }
 
     /**
@@ -317,7 +299,7 @@ public class HttpResponse implements AutoCloseable {
      * @return an unmodifiable {@code Map} of the response headers sent by the server
      */
     public Map<String, List<String>> getHeaders() {
-        return responseHeaders;
+        return headers;
     }
 
     /**
@@ -382,15 +364,6 @@ public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Returns {@code true} if the response contains a 2xx {@link #getStatusCode() Status-Code}, else {@code false}.
-     * 
-     * @return {@code true} if the response contains a 2xx {@link #getStatusCode() Status-Code}, else {@code false}
-     */
-    public boolean isSuccessful() {
-        return statusCode >= 200 && statusCode < 300;
-    }
-
-    /**
      * Override {@link #getContentCharset() Content-Type} charset returned by the server. Calling this method will ensure
      * {@link #getBody() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset to
      * parse the {@code Message-Body}.
@@ -410,18 +383,27 @@ public class HttpResponse implements AutoCloseable {
         return this;
     }
 
-    private InputStream unzip(final InputStream in) throws IOException {
-        if ("gzip".equals(getContentEncoding()))
-            return new GZIPInputStream(in);
-        else if ("x-gzip".equals(getContentEncoding()))
-            return new GZIPInputStream(in);
-        else if ("deflate".equals(getContentEncoding()))
-            return new DeflaterInputStream(in);
-        else
-            return in;
+    private String getErrorMessage() throws IOException {
+        final InputStream in = connection.getErrorStream();
+        return in == null ? null : new String(toByteArray(filter(in)), getContentCharset());
     }
-    
+
+    private InputStream filter(final InputStream in) throws IOException {
+        if (in == null)
+            throw new NullPointerException("in == null");
+
+        if ("gzip".equalsIgnoreCase(getContentEncoding()) || "x-gzip".equalsIgnoreCase(getContentEncoding()))
+            return new GZIPInputStream(in);
+
+        if ("deflate".equalsIgnoreCase(getContentEncoding()))
+            return new DeflaterInputStream(in);
+
+        return in;
+    }
+
     static byte[] toByteArray(final InputStream in) throws IOException {
+        if (in == null)
+            throw new NullPointerException("in == null");
 
         int length = 8192;
 

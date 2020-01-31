@@ -43,7 +43,7 @@ class GZipEncodingTest {
     static void setUpBeforeClass() throws Exception {
         content = "The quick brown fox jumps over the lazy dog";
         bytes = content.getBytes(StandardCharsets.UTF_8);
-        body = ByteArrayRequestBody.encode(content, StandardCharsets.UTF_8);
+        body = ByteArrayBody.encode(content, StandardCharsets.UTF_8);
         encoded = GZipEncoding.encode(body);
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -69,18 +69,18 @@ class GZipEncodingTest {
 
     @Test
     void lengthEncoded() throws IOException {
-        assertEquals(gz.length, encoded.getLength());
+        assertEquals(gz.length, encoded.getContentLength());
     }
 
     @Test
     void lengthStreaming() throws IOException {
-        assertEquals(-1, streaming.getLength());
+        assertEquals(-1, streaming.getContentLength());
     }
 
     @Test
     void lengthStreamingAfterGetInputStream() throws IOException {
         streaming.getInputStream();
-        assertEquals(gz.length, streaming.getLength());
+        assertEquals(gz.length, streaming.getContentLength());
     }
 
     @Test

@@ -28,38 +28,49 @@ import java.io.OutputStream;
 public interface RequestBody {
 
     /**
-     * Returns an input stream which reads this {@code Message-Body}.
+     * Returns an input stream which reads this {@code Message-Body} (optional operation). If this operation is not
+     * supported, implementing classes must override the {@link #write(OutputStream)} method.
      * <p>
-     * Whether or not <i>retry</i> is supported, that is whether or not this method will produce independent input streams
-     * to the underlying source on subsequent calls, is implementation dependent. Subsequent calls may return the same input
-     * stream (which will be empty if it has been exhausted), or may end up throwing a {@code RuntimeException}.
+     * Whether or not this method will produce independent input streams to the underlying source on subsequent calls, is
+     * implementation dependent. Subsequent calls may return the same input stream (which will be empty if it has been
+     * exhausted), or may end up throwing an {@code Exception}.
      * 
      * @return an input stream which reads this {@code Message-Body}
-     * @throws IOException if an I/O error occurs
+     * @throws IOException                   if an I/O error occurs
+     * @throws UnsupportedOperationException if this operation is not supported
      */
     public InputStream getInputStream() throws IOException;
 
     /**
-     * Returns the content type of this {@code Message-Body} or {@code null} if it is not specified.
+     * Returns the {@code Content-Encoding} of this {@code Message-Body} or {@code null} if it is not specified.
      * 
-     * @return the content type of this {@code Message-Body} or {@code null} if it is not specified
+     * @return the {@code Content-Encoding} of this {@code Message-Body} or {@code null} if it is not specified
      */
-    default String getType() {
+    default String getContentEncoding() {
         return null;
     }
 
     /**
-     * Returns the length of this {@code Message-Body} in bytes or or -1 if it is not specified.
+     * Returns the {@code Content-Type} of this {@code Message-Body} or {@code null} if it is not specified.
      * 
-     * @return the length of this {@code Message-Body} in bytes or or -1 if it is not specified
+     * @return the {@code Content-Type} of this {@code Message-Body} or {@code null} if it is not specified
      */
-    default long getLength() {
+    default String getContentType() {
+        return null;
+    }
+
+    /**
+     * Returns the length of this {@code Message-Body} in bytes or -1 if it is not specified.
+     * 
+     * @return the length of this {@code Message-Body} in bytes or -1 if it is not specified
+     */
+    default long getContentLength() {
         return -1;
     }
 
     /**
-     * Writes this {@code Message-Body} to the specified output stream. Closes the {@link #getInputStream() input stream}.
-     * Does not close the output stream.
+     * Writes this {@code Message-Body} to the specified output stream. Closes the {@link #getInputStream() input stream} if
+     * any exists. Does not close the output stream.
      * <p>
      * The default implementation writes all bytes from the {@link #getInputStream() input stream} to the output stream.
      * 

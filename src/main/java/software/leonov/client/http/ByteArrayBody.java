@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
  * 
  * @author Zhenya Leonov
  */
-public class ByteArrayRequestBody implements RequestBody {
+public class ByteArrayBody implements RequestBody {
 
     private final byte[] bytes;
     private final int offset;
@@ -36,23 +36,23 @@ public class ByteArrayRequestBody implements RequestBody {
     private String contentType = null;
 
     /**
-     * Constructs a new {@code ByteArrayRequestBody} using the specified byte array as the backing buffer.
+     * Constructs a new {@code ByteArrayBody} using the specified byte array as the backing buffer.
      * 
      * @param bytes the backing byte array buffer
      */
-    public ByteArrayRequestBody(final byte[] bytes) {
+    public ByteArrayBody(final byte[] bytes) {
         this(bytes, 0, bytes.length);
     }
 
     /**
-     * Constructs a new {@code ByteArrayRequestBody} using the specified byte array with the specified {@code offset} and
+     * Constructs a new {@code ByteArrayBody} using the specified byte array with the specified {@code offset} and
      * {@code length} as the backing buffer.
      * 
      * @param bytes  the byte array buffer
      * @param offset the offset in the buffer of the first byte to read
      * @param length the maximum number of bytes to read from the buffer
      */
-    public ByteArrayRequestBody(final byte[] bytes, final int offset, final int length) {
+    public ByteArrayBody(final byte[] bytes, final int offset, final int length) {
         if (bytes == null)
             throw new NullPointerException("bytes == null");
         if (offset < 0)
@@ -68,33 +68,33 @@ public class ByteArrayRequestBody implements RequestBody {
     }
 
     /**
-     * Returns a new {@code ByteArrayRequestBody} whose buffer is {@link String#getBytes(Charset) encoded} from the
-     * specified string using the UTF-8 charset.
+     * Returns a new {@code ByteArrayBody} whose buffer is {@link String#getBytes(Charset) encoded} from the specified
+     * string using the UTF-8 charset. By default the {@link #getContentType() Content-Type} is set to <i>text/plain</i>.
      * 
      * @param body the string to encode
-     * @return a new {@code ByteArrayRequestBody} whose buffer is {@link String#getBytes(Charset) encoded} from the
-     *         specified string using the UTF-8 charset
+     * @return a new {@code ByteArrayBody} whose buffer is {@link String#getBytes(Charset) encoded} from the specified
+     *         string using the UTF-8 charset
      */
-    public static ByteArrayRequestBody encode(final String body) {
-        return new ByteArrayRequestBody(body.getBytes(StandardCharsets.UTF_8));
+    public static ByteArrayBody encode(final String body) {
+        return encode(body, StandardCharsets.UTF_8);
     }
 
     /**
-     * Returns a new {@code ByteArrayRequestBody} whose buffer is {@link String#getBytes(Charset) encoded} from the
-     * specified string using the given charset.
+     * Returns a new {@code ByteArrayBody} whose buffer is {@link String#getBytes(Charset) encoded} from the specified
+     * string using the given charset. By default the {@link #getContentType() Content-Type} is set to <i>text/plain</i>.
      * 
      * @param body    the string to encode
      * @param charset the specified charset
-     * @return a new {@code ByteArrayRequestBody} whose buffer is {@link String#getBytes(Charset) encoded} from the
-     *         specified string using the given charset
+     * @return a new {@code ByteArrayBody} whose buffer is {@link String#getBytes(Charset) encoded} from the specified
+     *         string using the given charset
      */
-    public static ByteArrayRequestBody encode(final String body, final Charset charset) {
+    public static ByteArrayBody encode(final String body, final Charset charset) {
         if (body == null)
             throw new NullPointerException("body == null");
         if (charset == null)
             throw new NullPointerException("charset == null");
 
-        return new ByteArrayRequestBody(body.getBytes(charset));
+        return new ByteArrayBody(body.getBytes(charset));
     }
 
     /**
@@ -103,13 +103,32 @@ public class ByteArrayRequestBody implements RequestBody {
      * @return the length of the backing byte array buffer
      */
     @Override
-    public long getLength() {
+    public long getContentLength() {
         return length;
     }
 
     @Override
-    public String getType() {
+    public String getContentType() {
         return contentType;
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+        return new ByteArrayInputStream(bytes, offset, length);
+    }
+
+    /**
+     * Sets the {@code Content-Type} of this {@code Message-Body}.
+     * 
+     * @param contentType the {@code Content-Type}
+     * @return this {@code RequestBody} instance
+     */
+    public ByteArrayBody setContentType(final String contentType) {
+        if (contentType == null)
+            throw new NullPointerException("contentType == null");
+
+        this.contentType = contentType;
+        return this;
     }
 
     /**
@@ -127,16 +146,6 @@ public class ByteArrayRequestBody implements RequestBody {
 
         to.write(bytes, offset, length);
         to.flush();
-    }
-
-    @Override
-    public InputStream getInputStream() throws IOException {
-        return new ByteArrayInputStream(bytes, offset, length);
-    }
-
-    ByteArrayRequestBody setType(final String type) {
-        this.contentType = type;
-        return this;
     }
 
 }

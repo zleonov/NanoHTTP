@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Thrown when an HTTP response contains an {@link HttpResponse#isSuccessful() error}
- * {@link HttpResponse#getStatusCode() Status-Code}.
+ * Thrown when an HTTP response does not contain a <i>2xx</i> {@link HttpResponse#getStatusCode() Status-Code}.
  * 
  * @author Zhenya Leonov
  */

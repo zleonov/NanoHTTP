@@ -110,14 +110,14 @@ final public class FormBuilder {
     }
 
     /**
-     * Returns a new {@code ByteArrayRequestBody} whose buffer is encoded from the parameters added to this builder using
-     * the UTF-8 charset.
+     * Returns a new {@code ByteArrayBody} whose buffer is encoded from the parameters added to this builder using the UTF-8
+     * charset.
      * 
-     * @return a new {@code ByteArrayRequestBody} whose buffer is encoded from the parameters added to this builder using
-     *         the UTF-8 charset
+     * @return a new {@code ByteArrayBody} whose buffer is encoded from the parameters added to this builder using the UTF-8
+     *         charset
      */
-    public ByteArrayRequestBody build() {
-        return ByteArrayRequestBody.encode(toString(), StandardCharsets.UTF_8).setType("application/x-www-form-urlencoded");
+    public ByteArrayBody build() {
+        return ByteArrayBody.encode(toString(), StandardCharsets.UTF_8).setContentType("application/x-www-form-urlencoded");
     }
 
 }

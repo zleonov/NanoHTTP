@@ -34,7 +34,6 @@ import java.util.zip.GZIPOutputStream;
  * 
  * final HttpClient http = HttpClient.getDefaultClient();
  * 
- * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setBody(GZipEncoding.stream(body)).send();
  * http.post(dest).setContentType(contentType).setBody(GZipEncoding.stream(body)).send(); // Content-Encoding will be set automatically
  * </pre>
  * 
@@ -42,16 +41,14 @@ import java.util.zip.GZIPOutputStream;
  * 
  * <pre>
  * 
- * final GZipEncoding gz = GZipEncoding.encode(body);
- * http.post(dest).setContentType(contentType).setContentEncoding("gzip").setContentLength(gz.length()).setBody(gz).send();
- * http.post(dest).setContentType(contentType).setBody(gz).send(); // Content-Length and Content-Encoding will be set automatically
+ * http.post(dest).setContentType(contentType).setBody(GZipEncoding.encode(body)).send(); // Content-Encoding and Content-Length will be set automatically
  * </pre>
  * 
  * @author Zhenya Leonov
  */
 public final class GZipEncoding implements RequestBody {
 
-    final private RequestBody body;
+    private final RequestBody body;
     private int length;
     private byte[] buffer;
 
@@ -71,7 +68,8 @@ public final class GZipEncoding implements RequestBody {
      * Returns a new {@code GZipEncoding} which will stream the specified {@code Message-Body} to the server using GZip
      * compression.
      * <p>
-     * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #getLength()} method will return -1.
+     * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #getContentLength()} method will
+     * return -1.
      * 
      * @param body the specified {@code Message-Body}
      */
@@ -103,17 +101,41 @@ public final class GZipEncoding implements RequestBody {
      * 
      * @return the length of the backing byte array buffer or -1 if it has not been {@link #encode(RequestBody) buffered}
      */
-    public long getLength() {
+    @Override
+    public long getContentLength() {
         return length;
     }
 
     /**
-     * Returns an input stream which reads the underlying compressed {@code Message-Body}. Calling this method should be
-     * avoided by the user since it will require compressing the underlying {@code Message-Body} into a byte array buffer
-     * (if it has not been {@link #encode(RequestBody) buffered} already) even if the intent was to
-     * {@link #stream(RequestBody) stream} the underlying {@code Message-Body}. This method is not called internally.
+     * Returns {@code gzip}.
+     *
+     * @return {@code gzip}
+     */
+    @Override
+    public String getContentEncoding() {
+        return "gzip";
+    }
+
+    /**
+     * {@inheritDoc}
      * <p>
-     * The contents of the input stream will have to be uncompressed.
+     * By default returns the {@code Content-Type} of the underlying {@code RequestBody}.
+     */
+    @Override
+    public String getContentType() {
+        return body.getContentType();
+    }
+
+    /**
+     * Returns an input stream which reads the underlying compressed {@code Message-Body}. The returned stream will have to
+     * be uncompressed.
+     * <p>
+     * Although this operation is supported, it should be avoided by the user since it will require compressing the
+     * underlying {@code Message-Body} into a byte array buffer (if it has not been {@link #encode(RequestBody) buffered}
+     * already). This may be problematic if the intent was to {@link #stream(RequestBody) stream} the underlying
+     * {@code Message-Body} (for example: when uploading a large file).
+     * <p>
+     * This method is not called internally.
      * 
      * @return an input stream which reads this {@code Message-Body}
      * @throws IOException if an I/O error occurs
@@ -143,17 +165,10 @@ public final class GZipEncoding implements RequestBody {
             to.write(buffer);
             to.flush();
         } else {
-            final GZIPOutputStream out = new GZIPOutputStream(to, true);
-
-            try (final InputStream from = body.getInputStream()) {
-                final byte[] buffer = new byte[8192];
-                int r;
-                while ((r = from.read(buffer)) != -1)
-                    out.write(buffer, 0, r);
-
-                out.finish();
-                out.flush();
-            }
+            final GZIPOutputStream out = new GZIPOutputStream(to);
+            body.write(out);
+            out.finish();
+            out.flush();
         }
     }
 

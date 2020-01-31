@@ -34,8 +34,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-import com.google.api.client.http.HttpResponseException;
-
 /**
  * An HTTP request with no {@code Message-Body}: {@code HEAD}, {@code GET}, {@code OPTIONS}, or {@code TRACE}.
  * 
@@ -99,8 +97,6 @@ public class HttpRequest {
     /**
      * Returns the value of the named general request header for this request or {@code null} if it is not specified.
      * <p>
-     * If the header field was defined multiple times, only the last value is returned.
-     * <p>
      * <b>Note:</b> Some request headers like {@code Pragma} or {@code Cache-Control} (not an exhaustive list) are not set
      * until this request is executed, others may not be accessible for security reasons. See
      * {@link #setHeader(String, String)} for more information.
@@ -125,7 +121,7 @@ public class HttpRequest {
      * {@code Proxy-Connection} (not an exhaustive list) are not set until this request is executed, others may not be
      * accessible for security reasons. See {@link #setHeader(String, String)} for more information.
      * 
-     * @return an unmodifiable {@code Map} of the request headers for this connection
+     * @return an unmodifiable {@code Map} of the general request headers for this request
      */
     public Map<String, String> getHeaders() {
         final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -174,16 +170,11 @@ public class HttpRequest {
 
     /**
      * Sends the HTTP request.
-     * <p>
-     * For {@code GET}, {@code OPTIONS}, and {@code TRACE} requests, an {@link HttpResponseException} will not be thrown if
-     * the HTTP response contains an {@link HttpResponse#isSuccessful() error} {@link HttpResponse#getStatusCode()
-     * Status-Code} until attempts to read the {@link HttpResponse#getBody() Message-Body} are made. If the request
-     * {@link HttpResponse#hasBody() does not have} a {@code Message-Body} an {@code HttpResponseException} will never be
-     * thrown. The error information can be interrogated via the {@link HttpResponse#getStatusCode()} and
-     * {@link HttpResponse#getErrorMessage()} methods.
      * 
      * @return the response from the server
-     * @throws IOException if an I/O error occurs
+     * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#getStatusCode()
+     *                               Status-Code}
+     * @throws IOException           if an I/O error occurs
      */
     public HttpResponse send() throws IOException {
 
