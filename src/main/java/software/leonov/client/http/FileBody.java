@@ -57,7 +57,7 @@ final public class FileBody implements RequestBody {
      * @return the size of the file in bytes
      */
     @Override
-    public long getContentLength() {
+    public long length() {
         return size;
     }
 
@@ -76,7 +76,7 @@ final public class FileBody implements RequestBody {
      * 
      * @return the name of the file
      */
-    public String getFileName() {
+    public String filename() {
         return file.getFileName().toString();
     }
     

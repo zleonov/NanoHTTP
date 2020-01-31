@@ -123,7 +123,7 @@ public class HttpRequest {
      * 
      * @return an unmodifiable {@code Map} of the general request headers for this request
      */
-    public Map<String, String> getHeaders() {
+    public Map<String, String> headers() {
         final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         connection.getRequestProperties().forEach((name, values) -> headers.put(name, values.get(0)));
         return Collections.unmodifiableMap(headers);

@@ -116,7 +116,7 @@ public class HttpResponseException extends IOException {
      * @return an unmodifiable {@code Map} of the response headers sent by the server or {@code null} if they are not
      *         available or not known
      */
-    public Map<String, List<String>> getHeaders() {
+    public Map<String, List<String>> headers() {
         return responseHeaders;
     }
 

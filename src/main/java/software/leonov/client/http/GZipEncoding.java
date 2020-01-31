@@ -58,27 +58,39 @@ public final class GZipEncoding implements RequestBody {
         length = buffer.length;
     }
 
-    private GZipEncoding(final RequestBody body) {
+    /**
+     * Creates a new {@code GZipEncoding} which will stream the specified {@code Message-Body} to the server using GZip
+     * compression.
+     * <p>
+     * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #length()} method will return -1.
+     * 
+     * @param body the specified {@code Message-Body}
+     */
+    public GZipEncoding(final RequestBody body) {
+        if (body == null)
+            throw new NullPointerException("body == null");
+
         buffer = null;
         this.body = body;
         length = -1;
     }
 
-    /**
-     * Returns a new {@code GZipEncoding} which will stream the specified {@code Message-Body} to the server using GZip
-     * compression.
-     * <p>
-     * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #getContentLength()} method will
-     * return -1.
-     * 
-     * @param body the specified {@code Message-Body}
-     */
-    public static GZipEncoding stream(final RequestBody body) throws IOException {
-        if (body == null)
-            throw new NullPointerException("body == null");
-
-        return new GZipEncoding(body);
-    }
+//    /**
+//     * Returns a new {@code GZipEncoding} which will stream the specified {@code Message-Body} to the server using GZip
+//     * compression.
+//     * <p>
+//     * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #length()} method will
+//     * return -1.
+//     * 
+//     * @param body the specified {@code Message-Body}
+//     * @return
+//     */
+//    public static GZipEncoding stream(final RequestBody body) throws IOException {
+//        if (body == null)
+//            throw new NullPointerException("body == null");
+//
+//        return new GZipEncoding(body);
+//    }
 
     /**
      * Returns a new {@code GZipEncoding} which compresses the specified {@code Message-Body} into a byte array buffer.
@@ -102,7 +114,7 @@ public final class GZipEncoding implements RequestBody {
      * @return the length of the backing byte array buffer or -1 if it has not been {@link #encode(RequestBody) buffered}
      */
     @Override
-    public long getContentLength() {
+    public long length() {
         return length;
     }
 

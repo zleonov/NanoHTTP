@@ -60,7 +60,7 @@ class GZipEncodingTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        streaming = GZipEncoding.stream(body);
+        streaming = new GZipEncoding(body);
     }
 
     @AfterEach
@@ -69,18 +69,18 @@ class GZipEncodingTest {
 
     @Test
     void lengthEncoded() throws IOException {
-        assertEquals(gz.length, encoded.getContentLength());
+        assertEquals(gz.length, encoded.length());
     }
 
     @Test
     void lengthStreaming() throws IOException {
-        assertEquals(-1, streaming.getContentLength());
+        assertEquals(-1, streaming.length());
     }
 
     @Test
     void lengthStreamingAfterGetInputStream() throws IOException {
         streaming.getInputStream();
-        assertEquals(gz.length, streaming.getContentLength());
+        assertEquals(gz.length, streaming.length());
     }
 
     @Test

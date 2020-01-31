@@ -86,7 +86,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * {@link #setContentEncoding(String) Content-Encoding} header has not already been set, it will automatically be
      * updated.
      * <p>
-     * If the {@code Message-Body} {@link RequestBody#getContentLength() Content-Length} is known, and the
+     * If the {@code Message-Body} {@link RequestBody#length() Content-Length} is known, and the
      * {@link #setContentLength(long) Content-Length} header has not already been set, it will automatically be updated.
      * <p>
      * If the {@code Message-Body} {@link RequestBody#getContentType() Content-Type} is known, and the
@@ -109,8 +109,8 @@ public final class HttpRequestWithBody extends HttpRequest {
             if (body.getContentType() != null)
                 setIfNotSet("Content-Type", body.getContentType());
 
-            if (length < 0 && body.getContentLength() >= 0)
-                length = body.getContentLength();
+            if (length < 0 && body.length() >= 0)
+                length = body.length();
 
             if (length >= 0)
                 connection.setFixedLengthStreamingMode(length);

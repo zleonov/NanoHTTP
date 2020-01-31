@@ -64,7 +64,7 @@ public interface RequestBody {
      * 
      * @return the length of this {@code Message-Body} in bytes or -1 if it is not specified
      */
-    default long getContentLength() {
+    default long length() {
         return -1;
     }
 

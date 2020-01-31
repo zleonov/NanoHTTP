@@ -86,7 +86,7 @@ public class HttpResponse implements AutoCloseable {
         from = connection.getURL();
 
         if (statusCode < 200 || statusCode >= 300)
-            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
+            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
 
         final Map<String, List<String>> headerFields = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
         connection.getHeaderFields().forEach((name, values) -> headerFields.put(name, values));
@@ -298,7 +298,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return an unmodifiable {@code Map} of the response headers sent by the server
      */
-    public Map<String, List<String>> getHeaders() {
+    public Map<String, List<String>> headers() {
         return headers;
     }
 

@@ -103,7 +103,7 @@ public class ByteArrayBody implements RequestBody {
      * @return the length of the backing byte array buffer
      */
     @Override
-    public long getContentLength() {
+    public long length() {
         return length;
     }
 
