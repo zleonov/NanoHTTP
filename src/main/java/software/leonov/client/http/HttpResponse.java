@@ -86,7 +86,7 @@ public class HttpResponse implements AutoCloseable {
         from = connection.getURL();
 
         if (statusCode < 200 || statusCode >= 300)
-            throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
+            throw new HttpResponseException(statusLine()).setErrorMessage(getErrorMessage()).setHeaders(headers()).setStatusCode(statusCode()).from(from());
 
         final Map<String, List<String>> headerFields = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
         connection.getHeaderFields().forEach((name, values) -> headerFields.put(name, values));
@@ -109,7 +109,7 @@ public class HttpResponse implements AutoCloseable {
 
         body = hasBody ? new ResponseBody() {
 
-            final Charset charset = getContentCharset();
+            final Charset charset = contentCharset();
 
             @Override
             public InputStream getInputStream() throws IOException {
@@ -118,11 +118,11 @@ public class HttpResponse implements AutoCloseable {
 
             @Override
             public String asString() throws IOException {
-                return new String(toByteArray(), charset);
+                return new String(asBytes(), charset);
             }
 
             @Override
-            public byte[] toByteArray() throws IOException {
+            public byte[] asBytes() throws IOException {
                 return HttpResponse.toByteArray(getInputStream());
             }
         } : null;
@@ -182,7 +182,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the charset specified in the {@code Content-Type} header field, or {@link StandardCharsets#ISO_8859_1
      *         ISO_8859_1} if it is unspecified, unsupported, or cannot be discerned
      */
-    public Charset getContentCharset() {
+    public Charset contentCharset() {
         return charset;
     }
 
@@ -191,7 +191,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code Content-Encoding} header field or {@code null} if it is not known
      */
-    public String getContentEncoding() {
+    public String contentEncoding() {
         return contentEncoding;
     }
 
@@ -200,7 +200,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code Content-Length} header field or -1 if it is not known or cannot be discerned
      */
-    public long getContentLength() {
+    public long contentLength() {
         return contentLength;
     }
 
@@ -209,7 +209,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code Content-Type} header field or {@code null} if it is not known
      */
-    public String getContentType() {
+    public String contentType() {
         return contentType;
     }
 
@@ -218,7 +218,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code Date} header field or 0 if it is not known
      */
-    public long getDate() {
+    public long date() {
         return date;
     }
 
@@ -229,7 +229,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return
      */
-    public long getExpiration() {
+    public long expires() {
         return expiration;
     }
 
@@ -238,7 +238,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return the value of the {@code If-Modified-Since} header field or 0 to indicate that fetching must always occur
      */
-    public long getIfModifiedSince() {
+    public long ifModifiedSince() {
         return ifModifiedSince;
     }
 
@@ -249,7 +249,7 @@ public class HttpResponse implements AutoCloseable {
      * <b>Note:</b> Whether or not a {@code Message-Body} is buffered in the response is implementation dependent. Unless
      * otherwise stated, it should be assumed that the {@code ResponseBody} is <i>one-shot</i> stream backed by an active
      * connection to the server, and may be consumed only <b>once</b> by calling the the {@link ResponseBody#asString()},
-     * {@link ResponseBody#toByteArray()}, or {@link ResponseBody#getInputStream()} methods.
+     * {@link ResponseBody#asBytes()}, or {@link ResponseBody#getInputStream()} methods.
      * <p>
      * The response body <i>should</i> be consumed in it's entirety to allow the underlying {@code Connection} to be reused,
      * assuming <i>keep-alive</i> is on. All underlying streams will be closed when this response is {@link #close()
@@ -259,18 +259,18 @@ public class HttpResponse implements AutoCloseable {
      *         a {@code Message-Body}
      * @throws IOException if any other I/O error occurs
      */
-    public ResponseBody getBody() throws IOException {
+    public ResponseBody body() throws IOException {
         return body;
     }
 
     /**
-     * Returns the {@code Reason-Phrase}, if any, parsed alongside the {@link #getStatusCode() Status-Code} from the
-     * {@link #getStatusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid HTTP).
+     * Returns the {@code Reason-Phrase}, if any, parsed alongside the {@link #statusCode() Status-Code} from the
+     * {@link #statusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid HTTP).
      * 
-     * @return the {@code Reason-Phrase}, if any, parsed alongside the {@link #getStatusCode() Status-Code} from the
-     *         {@link #getStatusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid HTTP)
+     * @return the {@code Reason-Phrase}, if any, parsed alongside the {@link #statusCode() Status-Code} from the
+     *         {@link #statusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid HTTP)
      */
-    public String getReasonPhrase() {
+    public String reasonPhrase() {
         return reasonPhrase;
     }
 
@@ -282,7 +282,7 @@ public class HttpResponse implements AutoCloseable {
      * @param name the name of a header field (case-insensitive)
      * @return the value of the named header field or {@code null} if there is no such field in the response headers
      */
-    public String getHeader(final String name) {
+    public String headerValue(final String name) {
         if (name == null)
             throw new NullPointerException("name == null");
 
@@ -298,7 +298,7 @@ public class HttpResponse implements AutoCloseable {
      * 
      * @return an unmodifiable {@code Map} of the response headers sent by the server
      */
-    public Map<String, List<String>> getHeaders() {
+    public Map<String, List<String>> headers() {
         return headers;
     }
 
@@ -324,7 +324,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the {@code Status-Code} parsed from the HTTP response or -1 if no code can be discerned (the result was not
      *         valid HTTP)
      */
-    public int getStatusCode() {
+    public int statusCode() {
         return statusCode;
     }
 
@@ -335,7 +335,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the {@code Status-Line} parsed from the HTTP response or {@code null} if it cannot be discerned (the result
      *         was not valid HTTP)
      */
-    public String getStatusLine() {
+    public String statusLine() {
         return statusLine;
     }
 
@@ -364,8 +364,8 @@ public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Override {@link #getContentCharset() Content-Type} charset returned by the server. Calling this method will ensure
-     * {@link #getBody() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset to
+     * Override {@link #contentCharset() Content-Type} charset returned by the server. Calling this method will ensure
+     * {@link #body() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset to
      * parse the {@code Message-Body}.
      * <p>
      * As stated in <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5" target="_blank">RFC-7231</a>: <i>In
@@ -385,17 +385,17 @@ public class HttpResponse implements AutoCloseable {
 
     private String getErrorMessage() throws IOException {
         final InputStream in = connection.getErrorStream();
-        return in == null ? null : new String(toByteArray(filter(in)), getContentCharset());
+        return in == null ? null : new String(toByteArray(filter(in)), contentCharset());
     }
 
     private InputStream filter(final InputStream in) throws IOException {
         if (in == null)
             throw new NullPointerException("in == null");
 
-        if ("gzip".equalsIgnoreCase(getContentEncoding()) || "x-gzip".equalsIgnoreCase(getContentEncoding()))
+        if ("gzip".equalsIgnoreCase(contentEncoding()) || "x-gzip".equalsIgnoreCase(contentEncoding()))
             return new GZIPInputStream(in);
 
-        if ("deflate".equalsIgnoreCase(getContentEncoding()))
+        if ("deflate".equalsIgnoreCase(contentEncoding()))
             return new DeflaterInputStream(in);
 
         return in;

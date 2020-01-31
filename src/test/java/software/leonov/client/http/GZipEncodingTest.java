@@ -69,23 +69,23 @@ class GZipEncodingTest {
 
     @Test
     void lengthEncoded() throws IOException {
-        assertEquals(gz.length, encoded.getContentLength());
+        assertEquals(gz.length, encoded.length());
     }
 
     @Test
     void lengthStreaming() throws IOException {
-        assertEquals(-1, streaming.getContentLength());
+        assertEquals(-1, streaming.length());
     }
 
     @Test
     void lengthStreamingAfterGetInputStream() throws IOException {
-        streaming.getInputStream();
-        assertEquals(gz.length, streaming.getContentLength());
+        streaming.inputStream();
+        assertEquals(gz.length, streaming.length());
     }
 
     @Test
     void getInputStreamEncoded() throws IOException {
-        try (final InputStream in = encoded.getInputStream()) {
+        try (final InputStream in = encoded.inputStream()) {
             final byte[] bytes = HttpResponse.toByteArray(in);
             assertArrayEquals(gz, bytes);
         }
@@ -93,7 +93,7 @@ class GZipEncodingTest {
 
     @Test
     void getInputStreamStreaming() throws IOException {
-        try (final InputStream in = streaming.getInputStream()) {
+        try (final InputStream in = streaming.inputStream()) {
             final byte[] bytes = HttpResponse.toByteArray(in);
             assertArrayEquals(gz, bytes);
         }

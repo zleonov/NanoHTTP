@@ -328,14 +328,14 @@ public final class HttpClient {
     }
 
     private <T extends HttpRequest> T sets(final T request) {
-        requestHeaders.forEach((name, values) -> values.forEach(value -> request.setHeader(name, value)));
+        requestHeaders.forEach((name, values) -> values.forEach(value -> request.header(name, value)));
 
-        request.setUseCaches(useCaches).setReadTimeout(readTimeout).setFollowRedirects(followRedirects).setConnectTimeout(connectTimeout)
+        request.useCaches(useCaches).readTimeout(readTimeout).followRedirects(followRedirects).connectTimeout(connectTimeout)
         // .setAcceptGZipEncoding(acceptGZipEncoding)
         ;
 
         if (userPass != null)
-            request.setBasicAuthentication(userPass.get(0), userPass.get(1));
+            request.authenticate(userPass.get(0), userPass.get(1));
 
         return request;
     }

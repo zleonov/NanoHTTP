@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Thrown when an HTTP response does not contain a <i>2xx</i> {@link HttpResponse#getStatusCode() Status-Code}.
+ * Thrown when an HTTP response does not contain a <i>2xx</i> {@link HttpResponse#statusCode() Status-Code}.
  * 
  * @author Zhenya Leonov
  */
@@ -32,7 +32,7 @@ public class HttpResponseException extends IOException {
     private int statusCode = -1;
     private String errorMessage = null;
     private URL url = null;
-    private Map<String, List<String>> responseHeaders = null;
+    private Map<String, List<String>> headers = null;
 
     /**
      * Constructs an {@code HttpException} with the specified detail message.
@@ -67,11 +67,11 @@ public class HttpResponseException extends IOException {
     /**
      * Sets the response headers sent by the server.
      * 
-     * @param responseHeaders the response headers sent by the server or {@code null}
+     * @param headers the response headers sent by the server or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpResponseException setHeaders(final Map<String, List<String>> responseHeaders) {
-        this.responseHeaders = responseHeaders;
+    HttpResponseException setHeaders(final Map<String, List<String>> headers) {
+        this.headers = headers;
         return this;
     }
 
@@ -102,7 +102,7 @@ public class HttpResponseException extends IOException {
      * 
      * @return the error message sent by the server or {@code null}
      */
-    public String getErrorMessage() {
+    public String errorMessage() {
         return errorMessage;
     }
 
@@ -116,8 +116,8 @@ public class HttpResponseException extends IOException {
      * @return an unmodifiable {@code Map} of the response headers sent by the server or {@code null} if they are not
      *         available or not known
      */
-    public Map<String, List<String>> getHeaders() {
-        return responseHeaders;
+    public Map<String, List<String>> headers() {
+        return headers;
     }
 
     /**
@@ -140,7 +140,7 @@ public class HttpResponseException extends IOException {
      * 
      * @return the {@code Status-Code} parsed from the HTTP response or -1 if it is not available or not known
      */
-    public int getStatusCode() {
+    public int statusCode() {
         return statusCode;
     }
 

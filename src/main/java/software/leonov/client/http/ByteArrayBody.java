@@ -103,7 +103,7 @@ public class ByteArrayBody implements RequestBody {
      * @return the length of the backing byte array buffer
      */
     @Override
-    public long getContentLength() {
+    public long length() {
         return length;
     }
 
@@ -123,7 +123,7 @@ public class ByteArrayBody implements RequestBody {
      * @param contentType the {@code Content-Type}
      * @return this {@code RequestBody} instance
      */
-    public ByteArrayBody setContentType(final String contentType) {
+    public ByteArrayBody contentType(final String contentType) {
         if (contentType == null)
             throw new NullPointerException("contentType == null");
 

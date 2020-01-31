@@ -46,7 +46,7 @@ public interface RequestBody {
      * 
      * @return the {@code Content-Encoding} of this {@code Message-Body} or {@code null} if it is not specified
      */
-    default String getContentEncoding() {
+    default String getEncoding() {
         return null;
     }
 
@@ -64,7 +64,7 @@ public interface RequestBody {
      * 
      * @return the length of this {@code Message-Body} in bytes or -1 if it is not specified
      */
-    default long getContentLength() {
+    default long length() {
         return -1;
     }
 

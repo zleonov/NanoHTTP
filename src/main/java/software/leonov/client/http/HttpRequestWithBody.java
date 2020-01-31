@@ -45,7 +45,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      */
     public String getContentEncoding() {
-        return getHeader("Content-Encoding");
+        return headerValue("Content-Encoding");
     }
 
     /**
@@ -65,7 +65,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      */
     public String getContentType() {
-        return getHeader("Content-Type");
+        return headerValue("Content-Type");
     }
 
     /**
@@ -75,25 +75,25 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      * @throws IOException if an I/O error occurs
      */
-    public RequestBody getBody() {
+    public RequestBody body() {
         return body;
     }
 
     /**
      * Sends the HTTP request.
      * <p>
-     * If the {@code Message-Body} {@link RequestBody#getContentEncoding() Content-Encoding} is known, and the
-     * {@link #setContentEncoding(String) Content-Encoding} header has not already been set, it will automatically be
+     * If the {@code Message-Body} {@link RequestBody#getEncoding() Content-Encoding} is known, and the
+     * {@link #contentEncoding(String) Content-Encoding} header has not already been set, it will automatically be
      * updated.
      * <p>
-     * If the {@code Message-Body} {@link RequestBody#getContentLength() Content-Length} is known, and the
-     * {@link #setContentLength(long) Content-Length} header has not already been set, it will automatically be updated.
+     * If the {@code Message-Body} {@link RequestBody#length() Content-Length} is known, and the
+     * {@link #contentLength(long) Content-Length} header has not already been set, it will automatically be updated.
      * <p>
      * If the {@code Message-Body} {@link RequestBody#getContentType() Content-Type} is known, and the
-     * {@link #setContentType(String) Content-Type} header has not already been set, it will automatically be updated.
+     * {@link #contentType(String) Content-Type} header has not already been set, it will automatically be updated.
      * 
      * @return the response from the server
-     * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#getStatusCode()
+     * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#statusCode()
      *                               Status-Code}
      * @throws IOException           if any other I/O error occurs
      */
@@ -103,14 +103,14 @@ public final class HttpRequestWithBody extends HttpRequest {
         if (body != null) {
             connection.setDoOutput(true);
 
-            if (body.getContentEncoding() != null)
-                setIfNotSet("Content-Encoding", body.getContentEncoding());
+            if (body.getEncoding() != null)
+                setIfNotSet("Content-Encoding", body.getEncoding());
 
             if (body.getContentType() != null)
                 setIfNotSet("Content-Type", body.getContentType());
 
-            if (length < 0 && body.getContentLength() >= 0)
-                length = body.getContentLength();
+            if (length < 0 && body.length() >= 0)
+                length = body.length();
 
             if (length >= 0)
                 connection.setFixedLengthStreamingMode(length);
@@ -135,11 +135,11 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param encoding the value of the {@code Content-Encoding} header
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentEncoding(final String encoding) {
+    public HttpRequestWithBody contentEncoding(final String encoding) {
         if (encoding == null)
             throw new NullPointerException("encoding == null");
 
-        setHeader("Content-Encoding", encoding);
+        header("Content-Encoding", encoding);
         return this;
     }
 
@@ -153,7 +153,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param length the value of the {@code Content-Length} header in bytes
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentLength(final long length) {
+    public HttpRequestWithBody contentLength(final long length) {
         if (length < 0)
             throw new IllegalArgumentException("length < 0");
 
@@ -167,11 +167,11 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @param contentType the value of the {@code Content-Type} header
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequestWithBody setContentType(final String contentType) {
+    public HttpRequestWithBody contentType(final String contentType) {
         if (contentType == null)
             throw new NullPointerException("contentType == null");
 
-        setHeader("Content-Type", contentType);
+        header("Content-Type", contentType);
         return this;
     }
 
@@ -182,7 +182,7 @@ public final class HttpRequestWithBody extends HttpRequest {
      * @return this {@code HttpRequest} instance
      * @throws IOException if an I/O error occurs
      */
-    public HttpRequestWithBody setBody(final RequestBody body) throws IOException {
+    public HttpRequestWithBody body(final RequestBody body) throws IOException {
         if (body == null)
             throw new NullPointerException("body = null");
 

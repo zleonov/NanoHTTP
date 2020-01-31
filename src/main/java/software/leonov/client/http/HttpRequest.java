@@ -99,12 +99,12 @@ public class HttpRequest {
      * <p>
      * <b>Note:</b> Some request headers like {@code Pragma} or {@code Cache-Control} (not an exhaustive list) are not set
      * until this request is executed, others may not be accessible for security reasons. See
-     * {@link #setHeader(String, String)} for more information.
+     * {@link #header(String, String)} for more information.
      * 
      * @param name the name of a header field (case-insensitive)
      * @return the value of the named general request header for this request or {@code null} if it is not specified
      */
-    public String getHeader(final String name) {
+    public String headerValue(final String name) {
         if (name == null)
             throw new NullPointerException("name == null");
 
@@ -119,11 +119,11 @@ public class HttpRequest {
      * <p>
      * <b>Note:</b> Some request headers like {@code Pragma}, {@code Cache-Control}, {@code Connection},
      * {@code Proxy-Connection} (not an exhaustive list) are not set until this request is executed, others may not be
-     * accessible for security reasons. See {@link #setHeader(String, String)} for more information.
+     * accessible for security reasons. See {@link #header(String, String)} for more information.
      * 
      * @return an unmodifiable {@code Map} of the general request headers for this request
      */
-    public Map<String, String> getHeaders() {
+    public Map<String, String> headers() {
         final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         connection.getRequestProperties().forEach((name, values) -> headers.put(name, values.get(0)));
         return Collections.unmodifiableMap(headers);
@@ -134,7 +134,7 @@ public class HttpRequest {
      * 
      * @return the HTTP request method
      */
-    public String getMethod() {
+    public String method() {
         return connection.getRequestMethod();
     }
 
@@ -147,7 +147,7 @@ public class HttpRequest {
      * @return the {@code User-Agent} HTTP request header or {@code null} if it is not specified
      */
     public String getUserAgent() {
-        return getHeader("User-Agent");
+        return headerValue("User-Agent");
     }
 
     /**
@@ -172,7 +172,7 @@ public class HttpRequest {
      * Sends the HTTP request.
      * 
      * @return the response from the server
-     * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#getStatusCode()
+     * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#statusCode()
      *                               Status-Code}
      * @throws IOException           if an I/O error occurs
      */
@@ -199,7 +199,7 @@ public class HttpRequest {
      * @param password the password
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setBasicAuthentication(final String username, final String password) {
+    public HttpRequest authenticate(final String username, final String password) {
         if (username == null)
             throw new NullPointerException("username == null");
         if (password == null)
@@ -207,7 +207,7 @@ public class HttpRequest {
 
         final String data = username + ":" + password;
         final String base64 = Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
-        return setHeader("Authorization", "Basic " + base64);
+        return header("Authorization", "Basic " + base64);
     }
 
     /**
@@ -219,7 +219,7 @@ public class HttpRequest {
      * @param timeout the connect timeout
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setConnectTimeout(final Duration timeout) {
+    public HttpRequest connectTimeout(final Duration timeout) {
         if (timeout == null)
             throw new NullPointerException("timeout == null");
 
@@ -239,7 +239,7 @@ public class HttpRequest {
      * @param followRedirects a {@code boolean} indicating whether or not to follow HTTP redirects
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setFollowRedirects(final boolean followRedirects) {
+    public HttpRequest followRedirects(final boolean followRedirects) {
         connection.setInstanceFollowRedirects(followRedirects);
         return this;
     }
@@ -256,7 +256,7 @@ public class HttpRequest {
      * @param millis the number of milliseconds since epoch (January 1, 1970 GMT)
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setIfModifiedSince(final long millis) {
+    public HttpRequest ifModifiedSince(final long millis) {
         connection.setIfModifiedSince(millis);
         return this;
     }
@@ -271,7 +271,7 @@ public class HttpRequest {
      * @param timeout the read timeout
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setReadTimeout(final Duration timeout) {
+    public HttpRequest readTimeout(final Duration timeout) {
         if (timeout == null)
             throw new NullPointerException("timeout == null");
 
@@ -309,7 +309,7 @@ public class HttpRequest {
      * @param value the header value
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setHeader(final String name, final String value) {
+    public HttpRequest header(final String name, final String value) {
         if (name == null)
             throw new NullPointerException("name == null");
         if (value == null)
@@ -340,7 +340,7 @@ public class HttpRequest {
      * @param useCaches a boolean indicating whether or not to allow HTTP caching
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setUseCaches(final boolean useCaches) {
+    public HttpRequest useCaches(final boolean useCaches) {
         connection.setUseCaches(useCaches);
         return this;
     }
@@ -356,18 +356,18 @@ public class HttpRequest {
      * @param agent the {@code User-Agent} string
      * @return this {@code HttpRequest} instance
      */
-    public HttpRequest setUserAgent(final String agent) {
+    public HttpRequest userAgent(final String agent) {
         if (agent == null)
             throw new NullPointerException("agent == null");
 
-        setHeader("User-Agent", agent);
+        header("User-Agent", agent);
         return this;
     }
 
     protected void setIfNotSet(final String name, final String value) {
 
-        if (getHeader(name) == null)
-            setHeader(name, value);
+        if (headerValue(name) == null)
+            header(name, value);
     }
 
 }

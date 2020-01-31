@@ -35,7 +35,7 @@ final public class FileBody implements RequestBody {
 
         final String contentType = Files.probeContentType(file);
         if (contentType != null)
-            setContentType(contentType);
+            contentType(contentType);
 
         this.size = Files.size(file);
         this.file = file;
@@ -47,7 +47,7 @@ final public class FileBody implements RequestBody {
      * @return the {@code Content-Encoding} of the file or {@code null} if it is not specified
      */
     @Override
-    public String getContentEncoding() {
+    public String getEncoding() {
         return encoding;
     }
 
@@ -57,7 +57,7 @@ final public class FileBody implements RequestBody {
      * @return the size of the file in bytes
      */
     @Override
-    public long getContentLength() {
+    public long length() {
         return size;
     }
 
@@ -76,7 +76,7 @@ final public class FileBody implements RequestBody {
      * 
      * @return the name of the file
      */
-    public String getFileName() {
+    public String filename() {
         return file.getFileName().toString();
     }
     
@@ -98,7 +98,7 @@ final public class FileBody implements RequestBody {
      * @param encoding the {@code Content-Encoding}
      * @return this {@code RequestBody} instance
      */
-    public FileBody setContentEncoding(final String encoding) {
+    public FileBody encoding(final String encoding) {
         if (encoding == null)
             throw new NullPointerException("encoding == null");
 
@@ -114,7 +114,7 @@ final public class FileBody implements RequestBody {
      * @param contentType the {@code Content-Type}
      * @return this {@code RequestBody} instance
      */
-    public FileBody setContentType(final String contentType) {
+    public FileBody contentType(final String contentType) {
         if (contentType == null)
             throw new NullPointerException("contentType == null");
 

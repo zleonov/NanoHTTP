@@ -24,7 +24,7 @@ import java.io.InputStream;
  * <b>Note:</b> Whether or not a {@code Message-Body} is buffered in the response is implementation dependent. Unless
  * otherwise stated, it should be assumed that this {@code ResponseBody} object represents a <i>one-shot</i> stream
  * backed by an active connection to the server, and may be consumed only <b>once</b> by calling the the
- * {@link ResponseBody#asString()}, {@link ResponseBody#toByteArray()}, or {@link ResponseBody#getInputStream()}
+ * {@link ResponseBody#asString()}, {@link ResponseBody#asBytes()}, or {@link ResponseBody#getInputStream()}
  * methods.
  * <p>
  * The response body <i>should</i> be consumed in it's entirety to allow the underlying {@code Connection} to be reused,
@@ -49,7 +49,7 @@ public interface ResponseBody {
 
     /**
      * Parses and returns this {@code Message-Body} as a string. The charset used is determined by
-     * {@link HttpResponse#getContentCharset()}.
+     * {@link HttpResponse#contentCharset()}.
      * 
      * @return this {@code Message-Body} as a string
      * @throws IOException if an I/O error occurs
@@ -62,6 +62,6 @@ public interface ResponseBody {
      * @return a byte array containing all the bytes read from this {@code Message-Body}
      * @throws IOException if an I/O error occurs
      */
-    public byte[] toByteArray() throws IOException;
+    public byte[] asBytes() throws IOException;
 
 }

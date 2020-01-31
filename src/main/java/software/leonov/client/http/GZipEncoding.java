@@ -68,7 +68,7 @@ public final class GZipEncoding implements RequestBody {
      * Returns a new {@code GZipEncoding} which will stream the specified {@code Message-Body} to the server using GZip
      * compression.
      * <p>
-     * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #getContentLength()} method will
+     * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #length()} method will
      * return -1.
      * 
      * @param body the specified {@code Message-Body}
@@ -102,7 +102,7 @@ public final class GZipEncoding implements RequestBody {
      * @return the length of the backing byte array buffer or -1 if it has not been {@link #encode(RequestBody) buffered}
      */
     @Override
-    public long getContentLength() {
+    public long length() {
         return length;
     }
 
@@ -112,7 +112,7 @@ public final class GZipEncoding implements RequestBody {
      * @return {@code gzip}
      */
     @Override
-    public String getContentEncoding() {
+    public String getEncoding() {
         return "gzip";
     }
 

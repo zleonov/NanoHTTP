@@ -89,7 +89,7 @@ public final class MultipartBody implements RequestBody {
         /**
          * Adds a new <i>body</i> {@code Part} composed of the specified {@code RequestBody} to the {@code MultipartBody}.
          * <p>
-         * If the {@link RequestBody#getContentEncoding() Content-Encoding}, {@link RequestBody#getContentLength()
+         * If the {@link RequestBody#getEncoding() Content-Encoding}, {@link RequestBody#length()
          * Content-Length}, or {@link RequestBody#getContentType() Content-Type} values are defined, they will be inherited.
          * 
          * @param body the specified {@code RequestBody}
@@ -128,8 +128,8 @@ public final class MultipartBody implements RequestBody {
          * Adds a new multipart/form-data {@code Part} composed of the specified {@code RequestBody} to the
          * {@code MultipartBody}.
          * <p>
-         * The {@code Content-Disposition} header will be automatically composed and the {@link RequestBody#getContentEncoding()
-         * Content-Encoding}, {@link RequestBody#getContentLength() Content-Length}, or {@link RequestBody#getContentType()
+         * The {@code Content-Disposition} header will be automatically composed and the {@link RequestBody#getEncoding()
+         * Content-Encoding}, {@link RequestBody#length() Content-Length}, or {@link RequestBody#getContentType()
          * Content-Type} values will be inherited if they are defined.
          * 
          * @param field the input field name
@@ -143,7 +143,7 @@ public final class MultipartBody implements RequestBody {
             if (body == null)
                 throw new NullPointerException("body == null");
 
-            return (FormBuilder) super.part(new Part(body).setHeader("Content-Disposition", "form-data; name=\"" + field + "\""));
+            return (FormBuilder) super.part(new Part(body).header("Content-Disposition", "form-data; name=\"" + field + "\""));
         }
 
         /**
@@ -162,7 +162,7 @@ public final class MultipartBody implements RequestBody {
             if (value == null)
                 throw new NullPointerException("value == null");
 
-            final RequestBody body = ByteArrayBody.encode(value).setContentType("text/plain; charset=\"UTF-8\"");
+            final RequestBody body = ByteArrayBody.encode(value).contentType("text/plain; charset=\"UTF-8\"");
             return field(field, body);
         }
 
@@ -170,8 +170,8 @@ public final class MultipartBody implements RequestBody {
          * Adds a new multipart/form-data file {@code Part} composed of the specified {@code RequestBody} to the
          * {@code MultipartBody}.
          * <p>
-         * The {@code Content-Disposition} header will be automatically composed and the {@link RequestBody#getContentEncoding()
-         * Content-Encoding}, {@link RequestBody#getContentLength() Content-Length}, or {@link RequestBody#getContentType()
+         * The {@code Content-Disposition} header will be automatically composed and the {@link RequestBody#getEncoding()
+         * Content-Encoding}, {@link RequestBody#length() Content-Length}, or {@link RequestBody#getContentType()
          * Content-Type} values will be inherited if they are defined.
          * <p>
          * <b>Note:</b> The filename must be encoded in the {@link StandardCharsets#US_ASCII US_ASCII} charset as outlined in
@@ -190,7 +190,7 @@ public final class MultipartBody implements RequestBody {
             if (body == null)
                 throw new NullPointerException("body == null");
 
-            return (FormBuilder) part(new Part(body).setHeader("Content-Disposition", "form-data; name=\"" + field + "\"; filename=\"" + filename + "\""));
+            return (FormBuilder) part(new Part(body).header("Content-Disposition", "form-data; name=\"" + field + "\"; filename=\"" + filename + "\""));
         }
 
         /**
@@ -216,7 +216,7 @@ public final class MultipartBody implements RequestBody {
         /**
          * Creates a new <i>body</i> {@code Part} composed of the specified {@code RequestBody}.
          * <p>
-         * If the {@link RequestBody#getContentEncoding() Content-Encoding}, {@link RequestBody#getContentLength()
+         * If the {@link RequestBody#getEncoding() Content-Encoding}, {@link RequestBody#length()
          * Content-Length}, or {@link RequestBody#getContentType() Content-Type} values are defined, they will be inherited.
          * 
          * @param body the specified {@code RequestBody}
@@ -227,11 +227,11 @@ public final class MultipartBody implements RequestBody {
 
             this.body = body;
 
-            if (body.getContentEncoding() != null)
-                headers.put("Content-Encoding", body.getContentEncoding());
+            if (body.getEncoding() != null)
+                headers.put("Content-Encoding", body.getEncoding());
 
-            if (body.getContentLength() >= 0)
-                headers.put("Content-Length", Long.toString(body.getContentLength()));
+            if (body.length() >= 0)
+                headers.put("Content-Length", Long.toString(body.length()));
 
             if (body.getContentType() != null)
                 headers.put("Content-Type", body.getContentType());
@@ -244,7 +244,7 @@ public final class MultipartBody implements RequestBody {
          * 
          * @return the {@code RequestBody} used to construct this <i>body</i> {@code Part}
          */
-        public RequestBody getBody() {
+        public RequestBody body() {
             return body;
         }
 
@@ -256,7 +256,7 @@ public final class MultipartBody implements RequestBody {
          * 
          * @return an unmodifiable {@code Map} of the headers for this <i>body</i> {@code Part}
          */
-        public Map<String, String> getHeaders() {
+        public Map<String, String> headers() {
             return _headers;
         }
 
@@ -271,7 +271,7 @@ public final class MultipartBody implements RequestBody {
          * @param value the header value
          * @return this {@code Part} instance
          */
-        public Part setHeader(final String name, final String value) {
+        public Part header(final String name, final String value) {
             if (name == null)
                 throw new NullPointerException("name == null");
             if (value == null)
@@ -326,7 +326,7 @@ public final class MultipartBody implements RequestBody {
      * @return the encapsulation <i>boundary</i> string used to separate <i>body</i> {@code Part}s of a
      *         {@code MultipartBody}
      */
-    public String getBoundary() {
+    public String boundary() {
         return boundary;
     }
 
@@ -359,12 +359,12 @@ public final class MultipartBody implements RequestBody {
         for (final Part part : parts) {
             writer.write("--" + boundary + "\r\n");
 
-            for (final Entry<String, String> entry : part.getHeaders().entrySet())
+            for (final Entry<String, String> entry : part.headers().entrySet())
                 writer.write(entry.getKey() + ": " + entry.getValue() + "\r\n");
 
             writer.write("\r\n");
             writer.flush();
-            part.getBody().write(to);
+            part.body().write(to);
             writer.write("\r\n");
         }
 
