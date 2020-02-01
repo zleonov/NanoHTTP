@@ -275,12 +275,12 @@ public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Returns the value of the named header field.
+     * Returns the value of the named response header or {@code null} if it is not specified.
      * <p>
      * If the header field was defined multiple times, only the last value is returned.
      *
      * @param name the name of a header field (case-insensitive)
-     * @return the value of the named header field or {@code null} if there is no such field in the response headers
+     * @return the value of the named response header or {@code null} if it is not specified
      */
     public String getHeader(final String name) {
         if (name == null)

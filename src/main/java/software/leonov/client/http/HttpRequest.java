@@ -95,14 +95,14 @@ public class HttpRequest {
     }
 
     /**
-     * Returns the value of the named general request header for this request or {@code null} if it is not specified.
+     * Returns the value of the named request header or {@code null} if it is not specified.
      * <p>
      * <b>Note:</b> Some request headers like {@code Pragma} or {@code Cache-Control} (not an exhaustive list) are not set
      * until this request is executed, others may not be accessible for security reasons. See
      * {@link #setHeader(String, String)} for more information.
      * 
      * @param name the name of a header field (case-insensitive)
-     * @return the value of the named general request header for this request or {@code null} if it is not specified
+     * @return the value of the named request header or {@code null} if it is not specified
      */
     public String getHeader(final String name) {
         if (name == null)
@@ -112,7 +112,7 @@ public class HttpRequest {
     }
 
     /**
-     * Returns an unmodifiable {@code Map} of the general request headers for this request.
+     * Returns an unmodifiable {@code Map} of the request headers for this request.
      * <p>
      * The keys are strings (which are case-insensitive) that represent the request-header field names, the values are
      * strings that represents the corresponding field values. The order of the request headers is <b>not</b> maintained.
@@ -134,7 +134,7 @@ public class HttpRequest {
      * 
      * @return the HTTP request method
      */
-    public String getMethod() {
+    public String method() {
         return connection.getRequestMethod();
     }
 
