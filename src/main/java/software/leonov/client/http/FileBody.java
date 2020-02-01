@@ -14,7 +14,7 @@ final public class FileBody implements RequestBody {
 
     private final Path file;
     private final long size;
-    
+
     private String contentType = null;
     private String encoding = null;
 
@@ -23,7 +23,7 @@ final public class FileBody implements RequestBody {
      * <p>
      * The {@code Content-Type} of the file is determined by {@link Files#probeContentType(Path)}.
      * 
-     * @param file the specified file
+     * @param file the specified file (symlinks are followed)
      * @throws IOException if an I/O error occurs
      */
     public FileBody(final Path file) throws IOException {
@@ -31,7 +31,7 @@ final public class FileBody implements RequestBody {
             throw new NullPointerException("path == null");
 
         if (!Files.isRegularFile(file))
-            throw new IllegalArgumentException(file + " is not a regular file (symbolic links are followed) or does not exist");
+            throw new IllegalArgumentException(file + " is not a regular file or does not exist");
 
         final String contentType = Files.probeContentType(file);
         if (contentType != null)
@@ -79,7 +79,6 @@ final public class FileBody implements RequestBody {
     public String filename() {
         return file.getFileName().toString();
     }
-    
 
     /**
      * Returns a new {@code FileInputStream} to the file each time this method is called.
@@ -90,7 +89,6 @@ final public class FileBody implements RequestBody {
     public InputStream getInputStream() throws IOException {
         return Files.newInputStream(file);
     }
-
 
     /**
      * Sets the {@code Content-Encoding} of the file.
@@ -109,7 +107,8 @@ final public class FileBody implements RequestBody {
     /**
      * Sets the {@code Content-Type} of the file.
      * <p>
-     * Use this method when you want to override the {@code Content-Type} determined by {@link Files#probeContentType(Path)} when this {@code FileBody} was created.
+     * Use this method when you want to override the {@code Content-Type} determined by {@link Files#probeContentType(Path)}
+     * when this {@code FileBody} was created.
      * 
      * @param contentType the {@code Content-Type}
      * @return this {@code RequestBody} instance

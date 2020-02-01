@@ -34,7 +34,7 @@ import java.util.zip.GZIPOutputStream;
  * 
  * final HttpClient http = HttpClient.getDefaultClient();
  * 
- * http.post(dest).setContentType(contentType).setBody(GZipEncoding.stream(body)).send(); // Content-Encoding will be set automatically
+ * http.post(dest).setContentType(contentType).setBody(new GZipEncoding(body)).send(); // Content-Encoding will be set automatically
  * </pre>
  * 
  * or
@@ -59,7 +59,7 @@ public final class GZipEncoding implements RequestBody {
     }
 
     /**
-     * Creates a new {@code GZipEncoding} which will stream the specified {@code Message-Body} to the server using GZip
+     * Constructs a new {@code GZipEncoding} which will stream the specified {@code Message-Body} to the server using GZip
      * compression.
      * <p>
      * The {@code Message-Body} is not compressed into a buffer in advance. The {@link #length()} method will return -1.

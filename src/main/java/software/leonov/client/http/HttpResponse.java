@@ -88,9 +88,9 @@ public class HttpResponse implements AutoCloseable {
         if (statusCode < 200 || statusCode >= 300)
             throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
 
-        final Map<String, List<String>> headerFields = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
-        connection.getHeaderFields().forEach((name, values) -> headerFields.put(name, values));
-        headers = Collections.unmodifiableMap(headerFields);
+        final Map<String, List<String>> headers = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+        connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
+        this.headers = Collections.unmodifiableMap(headers);
 
         date = connection.getDate();
         expiration = connection.getExpiration();

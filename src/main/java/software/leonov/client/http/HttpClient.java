@@ -45,28 +45,24 @@ import javax.net.ssl.X509TrustManager;
 // What about https://docs.oracle.com/javase/8/docs/api/java/net/doc-files/net-properties.html#MiscHTTP
 public final class HttpClient {
 
-    private final Map<String, List<String>> requestHeaders;
+    private final Map<String, List<String>> headers;
     private final Duration connectTimeout;
     private final boolean followRedirects;
     private final Duration readTimeout;
     private final boolean useCaches;
-
     private final List<String> userPass;
-
     private final Proxy proxy;
-    private HostnameVerifier hostnameVerifier;
 
+    private HostnameVerifier hostnameVerifier;
     private SSLSocketFactory sslSocketFactory;
 
     private static final HttpClient defaultClient = builder().build();
 
-    private HttpClient(final Proxy proxy, final Map<String, List<String>> requestHeaders, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, /*
-                                                                                                                                                                                                              * final boolean
-                                                                                                                                                                                                              * acceptGZipEncoding,
-                                                                                                                                                                                                              */
-            final List<String> userPass, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) {
+    private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final List<String> userPass,
+            final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) {
+
         this.proxy = proxy;
-        this.requestHeaders = requestHeaders;
+        this.headers = headers;
         this.useCaches = useCaches;
         this.followRedirects = followRedirects;
         this.connectTimeout = connectTimeout;
@@ -125,7 +121,7 @@ public final class HttpClient {
     public HttpRequestWithBody delete(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return sets(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -150,7 +146,7 @@ public final class HttpClient {
     public HttpRequest get(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return sets(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -184,7 +180,7 @@ public final class HttpClient {
     public HttpRequest head(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return sets(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -209,7 +205,7 @@ public final class HttpClient {
     public HttpRequest options(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return sets(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -265,7 +261,7 @@ public final class HttpClient {
     public HttpRequestWithBody post(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return sets(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -294,7 +290,7 @@ public final class HttpClient {
     public HttpRequestWithBody put(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return sets(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
     /**
@@ -324,15 +320,13 @@ public final class HttpClient {
     public HttpRequest trace(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return sets(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory));
     }
 
-    private <T extends HttpRequest> T sets(final T request) {
-        requestHeaders.forEach((name, values) -> values.forEach(value -> request.setHeader(name, value)));
+    private <T extends HttpRequest> T setDefaults(final T request) {
+        headers.forEach((name, values) -> values.forEach(value -> request.setHeader(name, value)));
 
-        request.setUseCaches(useCaches).setReadTimeout(readTimeout).setFollowRedirects(followRedirects).setConnectTimeout(connectTimeout)
-        // .setAcceptGZipEncoding(acceptGZipEncoding)
-        ;
+        request.setUseCaches(useCaches).setReadTimeout(readTimeout).setFollowRedirects(followRedirects).setConnectTimeout(connectTimeout);
 
         if (userPass != null)
             request.setBasicAuthentication(userPass.get(0), userPass.get(1));
@@ -347,7 +341,7 @@ public final class HttpClient {
      */
     public final static class Builder {
 
-        private final Map<String, List<String>> requestHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        private final Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         private boolean followRedirects = true;
         private boolean useCaches = true;
@@ -371,7 +365,7 @@ public final class HttpClient {
          * @return a new {@code HttpClient} configured by this builder
          */
         public HttpClient build() {
-            return new HttpClient(proxy, requestHeaders, useCaches, followRedirects, connectTimeout, readTimeout, /* acceptGZipEncoding, */ userPass, hostnameVerifier, sslSocketFactory);
+            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, /* acceptGZipEncoding, */ userPass, hostnameVerifier, sslSocketFactory);
         }
 
         /**
@@ -530,7 +524,7 @@ public final class HttpClient {
 
             final List<String> values = new ArrayList<>(1);
             values.add(value);
-            requestHeaders.put(name, values);
+            headers.put(name, values);
             return this;
         }
 

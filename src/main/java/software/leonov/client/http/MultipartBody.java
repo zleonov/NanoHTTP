@@ -214,7 +214,7 @@ public final class MultipartBody implements RequestBody {
         private final RequestBody body;
 
         /**
-         * Creates a new <i>body</i> {@code Part} composed of the specified {@code RequestBody}.
+         * Constructs a new <i>body</i> {@code Part} composed of the specified {@code RequestBody}.
          * <p>
          * If the {@link RequestBody#getContentEncoding() Content-Encoding}, {@link RequestBody#length() Content-Length}, or
          * {@link RequestBody#getContentType() Content-Type} values are defined, they will be inherited.
