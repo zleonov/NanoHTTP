@@ -50,7 +50,7 @@ public final class HttpClient {
     private final boolean followRedirects;
     private final Duration readTimeout;
     private final boolean useCaches;
-    private final List<String> userPass;
+    private final List<String> basicAuth;
     private final Proxy proxy;
 
     private HostnameVerifier hostnameVerifier;
@@ -58,7 +58,7 @@ public final class HttpClient {
 
     private static final HttpClient defaultClient = builder().build();
 
-    private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final List<String> userPass,
+    private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final List<String> basicAuth,
             final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) {
 
         this.proxy = proxy;
@@ -67,7 +67,7 @@ public final class HttpClient {
         this.followRedirects = followRedirects;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
-        this.userPass = userPass;
+        this.basicAuth = basicAuth;
         this.hostnameVerifier = hostnameVerifier;
         this.sslSocketFactory = sslSocketFactory;
     }
@@ -328,8 +328,8 @@ public final class HttpClient {
 
         request.setUseCaches(useCaches).setReadTimeout(readTimeout).setFollowRedirects(followRedirects).setConnectTimeout(connectTimeout);
 
-        if (userPass != null)
-            request.setBasicAuthentication(userPass.get(0), userPass.get(1));
+        if (basicAuth != null)
+            request.setBasicAuthentication(basicAuth.get(0), basicAuth.get(1));
 
         return request;
     }
@@ -349,7 +349,7 @@ public final class HttpClient {
         private Duration connectTimeout = Duration.ofSeconds(60);
         private Duration readTimeout = Duration.ofSeconds(60);
 
-        private List<String> userPass = null;
+        private List<String> basicAuth = null;
 
         private HostnameVerifier hostnameVerifier = null;
         private SSLSocketFactory sslSocketFactory = null;
@@ -365,7 +365,7 @@ public final class HttpClient {
          * @return a new {@code HttpClient} configured by this builder
          */
         public HttpClient build() {
-            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, /* acceptGZipEncoding, */ userPass, hostnameVerifier, sslSocketFactory);
+            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, /* acceptGZipEncoding, */ basicAuth, hostnameVerifier, sslSocketFactory);
         }
 
         /**
@@ -427,7 +427,7 @@ public final class HttpClient {
             final String data = username + ":" + password;
             final String base64 = Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
 
-            userPass = Arrays.asList(username, base64);
+            basicAuth = Arrays.asList(username, base64);
 
             return this;
         }

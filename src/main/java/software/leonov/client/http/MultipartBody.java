@@ -131,8 +131,17 @@ public final class MultipartBody implements RequestBody {
          * The {@code Content-Disposition} header will be automatically composed and the {@link RequestBody#getContentEncoding()
          * Content-Encoding}, {@link RequestBody#length() Content-Length}, or {@link RequestBody#getContentType() Content-Type}
          * values will be inherited if they are defined.
+         * <p>
+         * <b>Note:</b> <a href="https://tools.ietf.org/html/rfc2388" target="_blank">RFC-2388</a> and later
+         * <a href="https://tools.ietf.org/html/rfc7578" target="_blank">RFC-7578</a> are somewhat
+         * <a href="https://tools.ietf.org/html/rfc7578#appendix-A" taget="_blank">unclear</a> and at times
+         * <a href="https://tools.ietf.org/html/rfc7578#appendix-B" target="_blank">contradictory</a> as to how Non-ASCII
+         * characters in field names should be
+         * <a href="https://tools.ietf.org/html/rfc7578#section-5.1" target="_blank">treated</a>. <u>This method does not use
+         * any encoding scheme to escape the field name.</u> <b>It is highly recommended to avoid
+         * Non-{@link StandardCharsets#US_ASCII US_ASCII} field names</b>.
          * 
-         * @param field the input field name
+         * @param field the input field name (must be <b>unquoted</b>)
          * @param body  the {@code RequestBody} to add
          * @return this {@code FormDataBuilder} instance
          * @return
@@ -143,7 +152,9 @@ public final class MultipartBody implements RequestBody {
             if (body == null)
                 throw new NullPointerException("body == null");
 
-            return (FormBuilder) super.part(new Part(body).setHeader("Content-Disposition", "form-data; name=\"" + field + "\""));
+            final String param = field.startsWith("\"") && field.endsWith("\"") ? field.substring(1, field.length() - 1) : field;
+
+            return (FormBuilder) super.part(new Part(body).setHeader("Content-Disposition", "form-data; name=\"" + param + "\""));
         }
 
         /**
@@ -151,8 +162,17 @@ public final class MultipartBody implements RequestBody {
          * <p>
          * The {@code Content-Disposition} header will be automatically composed and {@code Content-Type} of the body part will
          * be set to {@code text/plain; charset="UTF-8"}.
+         * <p>
+         * <b>Note:</b> <a href="https://tools.ietf.org/html/rfc2388" target="_blank">RFC-2388</a> and later
+         * <a href="https://tools.ietf.org/html/rfc7578" target="_blank">RFC-7578</a> are somewhat
+         * <a href="https://tools.ietf.org/html/rfc7578#appendix-A" taget="_blank">unclear</a> and at times
+         * <a href="https://tools.ietf.org/html/rfc7578#appendix-B" target="_blank">contradictory</a> as to how Non-ASCII
+         * characters in field names should be
+         * <a href="https://tools.ietf.org/html/rfc7578#section-5.1" target="_blank">treated</a>. <u>This method does not use
+         * any encoding scheme to escape the field name.</u> <b>It is highly recommended to avoid
+         * Non-{@link StandardCharsets#US_ASCII US_ASCII} field names</b>.
          * 
-         * @param field the input field name
+         * @param field the input field name (must be <b>unquoted</b>)
          * @param value the text value
          * @return this {@code FormDataBuilder} instance
          */
@@ -174,12 +194,21 @@ public final class MultipartBody implements RequestBody {
          * Content-Encoding}, {@link RequestBody#length() Content-Length}, or {@link RequestBody#getContentType() Content-Type}
          * values will be inherited if they are defined.
          * <p>
-         * <b>Note:</b> The filename must be encoded in the {@link StandardCharsets#US_ASCII US_ASCII} charset as outlined in
-         * <a href="https://www.ietf.org/rfc/rfc2045.html" target="_blank">RFC-2045</a>. The <i>filename*</i> parameter defined
-         * in <a href="https://tools.ietf.org/html/rfc6266" target="_blank">RFC-6266</a> is not currently supported.
+         * <b>Note:</b> <a href="https://tools.ietf.org/html/rfc2388" target="_blank">RFC-2388</a> and later
+         * <a href="https://tools.ietf.org/html/rfc7578" target="_blank">RFC-7578</a> are somewhat
+         * <a href="https://tools.ietf.org/html/rfc7578#appendix-A" taget="_blank">unclear</a> and at times
+         * <a href="https://tools.ietf.org/html/rfc7578#appendix-B" target="_blank">contradictory</a> as to how Non-ASCII
+         * characters in field names should be
+         * <a href="https://tools.ietf.org/html/rfc7578#section-5.1" target="_blank">treated</a>. Likewise RFC-7578
+         * <a href="https://tools.ietf.org/html/rfc7578#section-4.2" target="_blank">contradicts</a>
+         * <a href="https://tools.ietf.org/html/rfc6266#section-4.3" target="_blank">RFC-6266</a> as to how the <i>filename*</i>
+         * parameter should be used. <u>This method does not use any encoding scheme to escape the field name or the filename.
+         * </u> <b>It is highly recommended to avoid Non-{@link StandardCharsets#US_ASCII US_ASCII} in both the field name and
+         * the filename</b>.
          * 
-         * @param field the file input field name
-         * @param the   the {@code RequestBody} to add, typically a {@code FileBody}
+         * @param field    the file input field name (must be <b>unquoted</b>)
+         * @param filename the filename (must be <b>unquoted</b>)
+         * @param body     the {@code RequestBody} to add, typically a {@code FileBody}
          * @return this {@code FormDataBuilder} instance
          */
         public FormBuilder file(final String field, final String filename, final RequestBody body) {
