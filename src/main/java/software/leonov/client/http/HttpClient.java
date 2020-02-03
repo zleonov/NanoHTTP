@@ -24,8 +24,6 @@ import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -50,7 +48,7 @@ public final class HttpClient {
     private final boolean followRedirects;
     private final Duration readTimeout;
     private final boolean useCaches;
-    private final List<String> basicAuth;
+    private final Credentials credentials;
     private final Proxy proxy;
 
     private HostnameVerifier hostnameVerifier;
@@ -58,7 +56,7 @@ public final class HttpClient {
 
     private static final HttpClient defaultClient = builder().build();
 
-    private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final List<String> basicAuth,
+    private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final Credentials credentials,
             final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) {
 
         this.proxy = proxy;
@@ -67,7 +65,7 @@ public final class HttpClient {
         this.followRedirects = followRedirects;
         this.connectTimeout = connectTimeout;
         this.readTimeout = readTimeout;
-        this.basicAuth = basicAuth;
+        this.credentials = credentials;
         this.hostnameVerifier = hostnameVerifier;
         this.sslSocketFactory = sslSocketFactory;
     }
@@ -328,10 +326,30 @@ public final class HttpClient {
 
         request.setUseCaches(useCaches).setReadTimeout(readTimeout).setFollowRedirects(followRedirects).setConnectTimeout(connectTimeout);
 
-        if (basicAuth != null)
-            request.setBasicAuthentication(basicAuth.get(0), basicAuth.get(1));
+        if (credentials != null)
+            request.setBasicAuthentication(credentials.username(), credentials.password());
 
         return request;
+    }
+
+    private static final class Credentials {
+
+        private final String username;
+        private final String password;
+
+        private Credentials(final String username, final String password) {
+            this.username = username;
+            this.password = password;
+        }
+
+        private String username() {
+            return username;
+        }
+
+        private String password() {
+            return password;
+        }
+
     }
 
     /**
@@ -349,7 +367,7 @@ public final class HttpClient {
         private Duration connectTimeout = Duration.ofSeconds(60);
         private Duration readTimeout = Duration.ofSeconds(60);
 
-        private List<String> basicAuth = null;
+        private Credentials credentials = null;
 
         private HostnameVerifier hostnameVerifier = null;
         private SSLSocketFactory sslSocketFactory = null;
@@ -365,7 +383,7 @@ public final class HttpClient {
          * @return a new {@code HttpClient} configured by this builder
          */
         public HttpClient build() {
-            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, /* acceptGZipEncoding, */ basicAuth, hostnameVerifier, sslSocketFactory);
+            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, credentials, hostnameVerifier, sslSocketFactory);
         }
 
         /**
@@ -424,10 +442,7 @@ public final class HttpClient {
             if (password == null)
                 throw new NullPointerException("password == null");
 
-            final String data = username + ":" + password;
-            final String base64 = Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
-
-            basicAuth = Arrays.asList(username, base64);
+            credentials = new Credentials(username, password);
 
             return this;
         }

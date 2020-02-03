@@ -53,20 +53,14 @@ public class HttpResponse implements AutoCloseable {
     private final String contentType;
     private final String reasonPhrase;
     private final String statusLine;
-
     private final long contentLength;
     private final long date;
     private final long expiration;
     private final long ifModifiedSince;
-
     private final boolean hasBody;
-
     private final ResponseBody body;
-
     private final Map<String, List<String>> headers;
-
     private final int statusCode;
-
     private final URL from;
 
     HttpResponse(final HttpURLConnection connection) throws IOException {
