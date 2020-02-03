@@ -17,6 +17,7 @@ package software.leonov.client.http;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static software.leonov.client.http.ByteStream.toByteArray;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +27,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -85,6 +85,15 @@ public class HttpResponse implements AutoCloseable {
         contentEncoding = connection.getContentEncoding();
         from = connection.getURL();
 
+        if (contentType != null) {
+            final Matcher matcher = CHARSET.matcher(contentType);
+            if (matcher.find())
+                try {
+                    charset = Charset.forName(matcher.group(1));
+                } catch (final IllegalCharsetNameException | UnsupportedCharsetException e) {
+                }
+        }
+
         if (statusCode < 200 || statusCode >= 300)
             throw new HttpResponseException(getStatusLine()).setErrorMessage(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
 
@@ -95,15 +104,6 @@ public class HttpResponse implements AutoCloseable {
         date = connection.getDate();
         expiration = connection.getExpiration();
         ifModifiedSince = connection.getIfModifiedSince();
-
-        if (contentType != null) {
-            final Matcher matcher = CHARSET.matcher(contentType);
-            if (matcher.find())
-                try {
-                    charset = Charset.forName(matcher.group(1));
-                } catch (final IllegalCharsetNameException | UnsupportedCharsetException e) {
-                }
-        }
 
         hasBody = connection.getRequestMethod().equals("HEAD") || statusCode < 200 || statusCode == HTTP_NO_CONTENT || statusCode == HTTP_NOT_MODIFIED ? false : true;
 
@@ -123,7 +123,7 @@ public class HttpResponse implements AutoCloseable {
 
             @Override
             public byte[] toByteArray() throws IOException {
-                return HttpResponse.toByteArray(getInputStream());
+                return ByteStream.toByteArray(getInputStream());
             }
         } : null;
 
@@ -135,21 +135,23 @@ public class HttpResponse implements AutoCloseable {
     @Override
     public void close() {
 
-        final byte[] buffer = new byte[8192];
-
+        InputStream in = null;
         try {
-            final InputStream in = connection.getInputStream();
-            // while (in.read(buffer) != -1);
-            in.close();
+            in = connection.getInputStream();
+            if (in != null)
+                ByteStream.discard(in);
         } catch (final IOException e) {
+        } finally {
+            ByteStream.closeQuietly(in);
         }
 
         try {
-            final InputStream in = connection.getInputStream();
-            while (in.read(buffer) != -1)
-                ;
-            in.close();
+            in = connection.getErrorStream();
+            if (in != null)
+                ByteStream.discard(in);
         } catch (final IOException e) {
+        } finally {
+            ByteStream.closeQuietly(in);
         }
 
     }
@@ -399,29 +401,6 @@ public class HttpResponse implements AutoCloseable {
             return new DeflaterInputStream(in);
 
         return in;
-    }
-
-    static byte[] toByteArray(final InputStream in) throws IOException {
-        if (in == null)
-            throw new NullPointerException("in == null");
-
-        int length = 8192;
-
-        byte[] bytes = new byte[length];
-        int total = 0;
-        int n;
-
-        do {
-            while ((n = in.read(bytes, total, length - total)) > 0)
-                total += n;
-
-            if ((n = in.read()) != -1) {
-                bytes = Arrays.copyOf(bytes, (length *= 2) > Integer.MAX_VALUE ? Integer.MAX_VALUE : length);
-                bytes[total++] = (byte) n;
-            }
-        } while (n != -1);
-
-        return bytes.length == total ? bytes : Arrays.copyOf(bytes, total);
     }
 
 }

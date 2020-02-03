@@ -82,13 +82,9 @@ public interface RequestBody {
             throw new NullPointerException("to == null");
 
         try (final InputStream from = getInputStream()) {
-            final byte[] buffer = new byte[8192];
-            int r;
-            while ((r = from.read(buffer)) != -1)
-                to.write(buffer, 0, r);
+            ByteStream.copy(from, to);
+            to.flush();
         }
-
-        to.flush();
     }
 
 }

@@ -188,10 +188,7 @@ public final class GZipEncoding implements RequestBody {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try (final GZIPOutputStream to = new GZIPOutputStream(out); final InputStream from = body.getInputStream()) {
-            final byte[] buffer = new byte[8192];
-            int r;
-            while ((r = from.read(buffer)) != -1)
-                to.write(buffer, 0, r);
+            ByteStream.copy(from, to);
         }
 
         return out.toByteArray();

@@ -4,7 +4,7 @@ NanoHTTP
 NanoHTTP is a dead simple, fluent, easy-to-use, lightweight HTTP Client for Java 8.
 
 Overview
-==========
+========
 
 Traditionally, if you wanted to do an HTTP call in Java, you had to use the [HttpURLConnection](https://docs.oracle.com/javase/8/docs/api/java/net/HttpURLConnection.html) class in the *java.net* package. Unfortunately *HttpURLConnection* is a low-level API that is unintuitive at best and downright awful at worst. The resulting code is cumbersome and hard to understand. If you’re wondering what a nightmare the API is, see this StackOverflow [post](https://stackoverflow.com/questions/2793150/how-to-use-java-net-urlconnection-to-fire-and-handle-http-requests/2793153#2793153).
 
@@ -28,7 +28,9 @@ Goals
 - **No dependencies** (other than the JDK)
 - Support for "Basic" HTTP authentication scheme
 - Transparent GZip/Deflate support for HTTP responses
-- GZip support for HTTP *PUT* and *POST* requests
+- GZip encoding for HTTP *PUT* and *POST* requests
+- Support `application/x-www-form-urlencoded` content
+- Support for `multipart/form-data` content
 - Intuitive error handling
 - And more...
 
@@ -61,7 +63,6 @@ Here are some popular production-grade HTTP Clients:
 What's next?
 ============
 - Publish the project on Maven Central
-- Add native support for HTTP <i>multipart/form-data</i> requests
 - Cookie handling
 - This project is **sorely lacking** tests
     - Add more unit-tests
