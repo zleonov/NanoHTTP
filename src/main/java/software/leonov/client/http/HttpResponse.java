@@ -17,7 +17,6 @@ package software.leonov.client.http;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static software.leonov.client.http.ByteStream.toByteArray;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -387,7 +386,7 @@ public class HttpResponse implements AutoCloseable {
 
     private String getErrorMessage() throws IOException {
         final InputStream in = connection.getErrorStream();
-        return in == null ? null : new String(toByteArray(filter(in)), getContentCharset());
+        return in == null ? null : new String(ByteStream.toByteArray(filter(in)), getContentCharset());
     }
 
     private InputStream filter(final InputStream in) throws IOException {
