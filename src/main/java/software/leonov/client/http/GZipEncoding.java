@@ -144,7 +144,7 @@ public final class GZipEncoding implements RequestBody {
      * <p>
      * Although this operation is supported, it should be avoided by the user since it will require compressing the
      * underlying {@code Message-Body} into a byte array buffer (if it has not been {@link #encode(RequestBody) buffered}
-     * already). This may be problematic if the intent was to {@link #stream(RequestBody) stream} the underlying
+     * already). This may be problematic if the intent was to {@link #GZipEncoding(RequestBody) stream} the underlying
      * {@code Message-Body} (for example: when uploading a large file).
      * <p>
      * This method is not called internally.

@@ -20,6 +20,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.file.Path;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -188,6 +189,60 @@ public final class HttpRequestWithBody extends HttpRequest {
 
         this.body = body;
         return this;
+    }
+
+    /**
+     * Sends the specified text encoded in the UTF-8 charset to the server.
+     * <p>
+     * Shorthand for {@code setContentType(contentType).setBody(ByteArrayBody.encode(text)).send()}.
+     * 
+     * @param text        the text to send
+     * @param contentType the value of the {@code Content-Type} header
+     * @return the response from the server
+     * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#getStatusCode()
+     *                               Status-Code}
+     * @throws IOException           if any other I/O error occurs
+     */
+    public HttpResponse text(final String text, final String contentType) throws IOException {
+        if (text == null)
+            throw new NullPointerException("text = null");
+        if (contentType == null)
+            throw new NullPointerException("contentType = null");
+
+        return setContentType(contentType).setBody(ByteArrayBody.encode(text)).send();
+    }
+
+    /**
+     * Sends the specified file to the server. If the file size is greater than 1MB it will be sent using
+     * {@link GZipEncoding}.
+     * <p>
+     * Shorthand for {@code setContentType(contentType).setBody(new FileBody(file)).send()}
+     * 
+     * @param file        the file to send
+     * @param contentType the value of the {@code Content-Type} header
+     * @return the response from the server
+     * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#getStatusCode()
+     *                               Status-Code}
+     * @throws IOException           if any other I/O error occurs
+     */
+    public HttpResponse file(final Path file, final String contentType) throws IOException {
+        if (file == null)
+            throw new NullPointerException("file = null");
+        if (contentType == null)
+            throw new NullPointerException("contentType = null");
+
+        setContentType(contentType);
+
+        final FileBody filebody = new FileBody(file);
+
+        if (filebody.length() > 1024)
+            setBody(new GZipEncoding(filebody));
+        else
+            setBody(filebody);
+
+        return send();
+
+        // return setContentType(contentType).setBody(fileBody.length() > 1024 ? new GZipEncoding(fileBody) : fileBody).send();
     }
 
 }

@@ -337,16 +337,16 @@ public final class HttpClient {
         private final String username;
         private final String password;
 
-        private Credentials(final String username, final String password) {
+        public Credentials(final String username, final String password) {
             this.username = username;
             this.password = password;
         }
 
-        private String username() {
+        public String username() {
             return username;
         }
 
-        private String password() {
+        public String password() {
             return password;
         }
 
@@ -357,7 +357,7 @@ public final class HttpClient {
      * 
      * @author Zhenya Leonov
      */
-    public final static class Builder {
+    public static final class Builder {
 
         private final Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 

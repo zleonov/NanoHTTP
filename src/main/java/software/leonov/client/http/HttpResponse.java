@@ -49,11 +49,11 @@ public class HttpResponse implements AutoCloseable {
 
     private final HttpURLConnection connection;
 
-    private final String contentEncoding;
+    private final String encoding;
     private final String contentType;
-    private final String reasonPhrase;
+    private final String reason;
     private final String statusLine;
-    private final long contentLength;
+    private final long length;
     private final long date;
     private final long expiration;
     private final long ifModifiedSince;
@@ -71,11 +71,11 @@ public class HttpResponse implements AutoCloseable {
 
         statusCode = connection.getResponseCode();
 
-        contentLength = connection.getContentLengthLong();
+        length = connection.getContentLengthLong();
         statusLine = connection.getHeaderField(0);
-        reasonPhrase = connection.getResponseMessage();
+        reason = connection.getResponseMessage();
         contentType = connection.getContentType();
-        contentEncoding = connection.getContentEncoding();
+        encoding = connection.getContentEncoding();
         from = connection.getURL();
 
         if (contentType != null) {
@@ -187,7 +187,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the value of the {@code Content-Encoding} header field or {@code null} if it is not known
      */
     public String getContentEncoding() {
-        return contentEncoding;
+        return encoding;
     }
 
     /**
@@ -196,7 +196,7 @@ public class HttpResponse implements AutoCloseable {
      * @return the value of the {@code Content-Length} header field or -1 if it is not known or cannot be discerned
      */
     public long getContentLength() {
-        return contentLength;
+        return length;
     }
 
     /**
@@ -266,7 +266,7 @@ public class HttpResponse implements AutoCloseable {
      *         {@link #getStatusLine() Status-Line} or {@code null} if it could be discerned (the result was not valid HTTP)
      */
     public String getReasonPhrase() {
-        return reasonPhrase;
+        return reason;
     }
 
     /**
