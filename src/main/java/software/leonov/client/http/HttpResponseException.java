@@ -30,9 +30,9 @@ public class HttpResponseException extends IOException {
     private static final long serialVersionUID = 1016328592873099463L;
 
     private int statusCode = -1;
-    private String errorMessage = null;
-    private URL url = null;
-    private Map<String, List<String>> responseHeaders = null;
+    private String serverResponse = null;
+    private URL from = null;
+    private Map<String, List<String>> headers = null;
 
     /**
      * Constructs an {@code HttpException} with the specified detail message.
@@ -56,22 +56,22 @@ public class HttpResponseException extends IOException {
     /**
      * Sets the error message returned from the server.
      * 
-     * @param errorMessage the error message returned from the server or {@code null}
+     * @param serverResponse the error message returned from the server or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpResponseException setErrorMessage(final String errorMessage) {
-        this.errorMessage = errorMessage;
+    HttpResponseException setServerResponse(final String serverResponse) {
+        this.serverResponse = serverResponse;
         return this;
     }
 
     /**
      * Sets the response headers sent by the server.
      * 
-     * @param responseHeaders the response headers sent by the server or {@code null}
+     * @param headers the response headers sent by the server or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpResponseException setHeaders(final Map<String, List<String>> responseHeaders) {
-        this.responseHeaders = responseHeaders;
+    HttpResponseException setHeaders(final Map<String, List<String>> headers) {
+        this.headers = headers;
         return this;
     }
 
@@ -89,39 +89,39 @@ public class HttpResponseException extends IOException {
     /**
      * Sets the {@code URL} responsible for this exception.
      * 
-     * @param url the {@code URL} responsible for this exception or {@code null}
+     * @param from the {@code URL} responsible for this exception or {@code null}
      * @return this {@code HttpException} instance
      */
-    HttpResponseException from(final URL url) {
-        this.url = url;
+    HttpResponseException from(final URL from) {
+        this.from = from;
         return this;
     }
 
     /**
-     * Returns the error message sent by the server or {@code null} if it is not available or not known.
+     * Returns the error message sent by the server or {@code null} if it is not available.
      * 
      * @return the error message sent by the server or {@code null}
      */
-    public String getErrorMessage() {
-        return errorMessage;
+    public String getServerReponse() {
+        return serverResponse;
     }
 
     /**
      * Returns an unmodifiable {@code Map} of the response headers sent by the server or {@code null} if they are not
-     * available or not known.
+     * available.
      * <p>
      * The keys are strings that represent the response-header field names, the values are unmodifiable {@code List}s of
      * strings that represents the corresponding field values.
      * 
      * @return an unmodifiable {@code Map} of the response headers sent by the server or {@code null} if they are not
-     *         available or not known
+     *         available
      */
     public Map<String, List<String>> headers() {
-        return responseHeaders;
+        return headers;
     }
 
     /**
-     * Returns the {@code Status-Code} parsed from the HTTP response or -1 if it is not available or not known.
+     * Returns the {@code Status-Code} parsed from the HTTP response or -1 if it is not available.
      * <p>
      * The first digit of the {@code Status-Code} defines the class of response. The last two digits do not have any
      * categorization role. There are 5 values for the first digit:
@@ -138,19 +138,19 @@ public class HttpResponseException extends IOException {
      * - 5xx: Server Error - The server failed to fulfill an apparently valid request
      * </pre>
      * 
-     * @return the {@code Status-Code} parsed from the HTTP response or -1 if it is not available or not known
+     * @return the {@code Status-Code} parsed from the HTTP response or -1 if it is not available
      */
     public int getStatusCode() {
         return statusCode;
     }
 
     /**
-     * Returns the {@code URL} responsible for this exception or {@code null} if it is not available or not known.
+     * Returns the {@code URL} responsible for this exception or {@code null} if it is not available.
      * 
-     * @return the {@code URL} responsible for this exception or {@code null} if it is not available or not known
+     * @return the {@code URL} responsible for this exception or {@code null} if it is not available
      */
     public URL from() {
-        return url;
+        return from;
     }
 
 }
