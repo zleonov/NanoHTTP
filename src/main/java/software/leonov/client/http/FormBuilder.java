@@ -106,6 +106,9 @@ final public class FormBuilder {
      */
     @Override
     public String toString() {
+        if (buffer.length() == 0)
+            return "";
+
         return buffer.substring(1);
     }
 
@@ -117,6 +120,9 @@ final public class FormBuilder {
      *         charset
      */
     public ByteArrayBody build() {
+        if (buffer.length() == 0)
+            throw new IllegalArgumentException("application/x-www-form-urlencoded content must have at least one parameter");
+
         return ByteArrayBody.encode(toString(), StandardCharsets.UTF_8).setContentType("application/x-www-form-urlencoded");
     }
 

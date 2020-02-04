@@ -108,6 +108,8 @@ public final class MultipartBody implements RequestBody {
          * @return a new {@code MultipartBody} composed of the {@code Part}s added to this builder
          */
         public MultipartBody build() {
+            if(super.parts.isEmpty())
+                throw new IllegalArgumentException("multipart/mixed content must have at least one body part");
             return new MultipartBody(super.parts, super.contentType, super.boundary);
         }
 
@@ -228,6 +230,8 @@ public final class MultipartBody implements RequestBody {
          * @return a new {@code MultipartBody} composed of the input fields and files added to this builder
          */
         public MultipartBody build() {
+            if(super.parts.isEmpty())
+                throw new IllegalArgumentException("multipart/form-data content must have at least one field");
             return new MultipartBody(super.parts, super.contentType, super.boundary);
         }
 
