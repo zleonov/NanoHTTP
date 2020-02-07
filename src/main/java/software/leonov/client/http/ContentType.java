@@ -21,32 +21,16 @@ import com.google.common.base.CharMatcher;
  * No specific support comments is provided.
  */
 public final class ContentType {
-    
-    
-    
-    
-    
-    
-    
-    // OkHTTP: "([    a-zA-Z0-9_    -    !    #    $    %    &    '    *    +    .    ^    `    {    |    }    ~    ]+)";
-    // OkHTTP: "([%    '    *    `    {    |    }    ~    ]+)";
-    
-    // Google HTTP Client: "[    \\w    !    #    $    &    .    +    -    ^    ]+|[    *    ]");
-    // Google HTTP Client: "[]+|[    *    ]");
-    
-    final String zhenyaType = "";
-    
-    
-    
-    
-    //     ()<>@,;:\"/[]?=
-
-    
-    private static final String TOKEN = "([\\w-!#$%&'*+.^`{|}~]+)";
-    private static final String QUOTED = "[\"\']([^\'\"]*)[\"\']";
-    
-    private static final Pattern TYPE_SUBTYPE = Pattern.compile(TOKEN + "/" + TOKEN);
-    private static final Pattern PARAMETER = Pattern.compile(";\\s*(?:" + TOKEN + "=(?:" + TOKEN + "|" + QUOTED + "))?");
+    // https://tools.ietf.org/html/rfc2045#section-5.1
+//    private static final String ASCII = "\\p{ASCII}";
+//    private static final String NOT_CNTRL = "[^\\p{Cntrl}]";
+//    private static final String NOT_TSPECIALS = "[^" + " " + "(" + ")" + "<" + ">" + "@" + "," + ";" + ":" + "\\" + "\"" + "/" + "\\[" + "\\]" + "?" + "=" + "]";
+//
+    private final static String TOKEN = "[\\p{ASCII}&&[^\\p{Cntrl}]&&[/^ ()<>@,;:\\\"/\\[\\]?=]]";
+//    private final static String TOKEN2 = "[" + ASCII + "&&" + NOT_CNTRL + "&&" + NOT_TSPECIALS + "]";
+HttpMediaType
+    private static final Pattern TYPE_SUBTYPE = Pattern.compile("(" + TOKEN + ")/(" + TOKEN + ")");
+    private static final Pattern PARAMETER = Pattern.compile(";\\s*(?:(" + TOKEN + ")=(?:(" + TOKEN + ")|(\"([^\"]*)\"))?");
 
     private final String contentType;
     private final String type;
@@ -58,38 +42,36 @@ public final class ContentType {
         this.subtype = subtype;
         this.charset = charset;
     }
-    
+
     private Charset charset;
 
     public static ContentType parse(final String contentType) {
-        if(contentType == null)
+        if (contentType == null)
             throw new NullPointerException("contentType == null");
-        
-        
+
         final Matcher typeSubtype = TYPE_SUBTYPE.matcher(contentType);
-        
-        if (!typeSubtype.find())
-            throw new IllegalArgumentException("Content-Type is not valid: " +  contentType);
-        
+
+        if (!typeSubtype.lookingAt())
+            throw new IllegalArgumentException("Content-Type is not valid: " + contentType);
+
         final String type = typeSubtype.group(1).toLowerCase(Locale.US);
         final String subtype = typeSubtype.group(2).toLowerCase(Locale.US);
-        
-        if(type.equals("*") && !subtype.equals("*"))
+
+        if (type.equals("*") && !subtype.equals("*"))
             throw new IllegalArgumentException("Content-Type cannot have wildcard type with a declared subtype");
 
         final String params = contentType.substring(typeSubtype.end());
         final Matcher parameter = PARAMETER.matcher(params);
 
         Charset charset = null;
-        while(parameter.find()) {
+        while (parameter.find()) {
             String name = parameter.group(1);
             String value = parameter.group(2);
-            
-            if(name.equalsIgnoreCase("charset"))
+
+            if (name.equalsIgnoreCase("charset"))
                 charset = Charset.forName(value);
         }
-        
-        
+
 //        for (int s = typeSubtype.end(); s < contentType.length(); s = parameter.end()) {
 //            parameter.region(s, contentType.length());
 //            if (!parameter.lookingAt()) {
@@ -145,15 +127,15 @@ public final class ContentType {
     public String toString() {
         return contentType;
     }
-    
+
     public static void main(String[] args) {
         final String test = "text/plain; charset=utf-8";
-        
+
         ContentType ctype = ContentType.parse(test);
-        
+
         System.out.println(ctype.type());
         System.out.println(ctype.subtype());
         System.out.println(ctype.charset());
     }
-    
+
 }
