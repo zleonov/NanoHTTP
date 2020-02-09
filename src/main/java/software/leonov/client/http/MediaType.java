@@ -38,20 +38,21 @@ public final class MediaType {
     private static final String TSPECIALS = "(" + ")" + "<" + ">" + "@" + "," + ";" + ":" + "\\\\" + "\"" + "/" + "\\[" + "\\]" + "?" + "=";
 
     private final static String TOKEN = "[\\p{ASCII}&&[^\\p{Cntrl} " + TSPECIALS + "]]+";
+    private final static String PARAMETER = "\\s*;\\s*(" + TOKEN + ")=" + "(" + TOKEN + "|\"[^\"\\r\\n]*\")";
+
     private final static Pattern TOKEN_PATTERN = Pattern.compile(TOKEN);
-    //private final static Pattern TYPE_SUBTYPE = Pattern.compile("(" + TOKEN + ")/(" + TOKEN + ")");
-    
-    private final static String QUOTED = "\"([^\"\\r\\n]*)\"";
-    private final static String PARAMETER = ";\\s*" + TOKEN + "=" + "([^\"\\r\\n]*|"+ TOKEN + ")";
     private static final Pattern PARAMETER_PATTERN = Pattern.compile(PARAMETER, Pattern.DOTALL);
 
-    private final String type;
-    private final String subtype;
-
+    private String type;
+    private String subtype;
+    
     private Charset charset;
 
     private final Map<String, String> parameters = new TreeMap<>();
     private final Map<String, String> _parameters = Collections.unmodifiableMap(parameters);
+
+    MediaType() {
+    }
 
     MediaType(final String type, final String subtype) {
         if (type == null)
@@ -142,128 +143,55 @@ public final class MediaType {
     public static MediaType parse(final String contentType) {
         if (contentType == null)
             throw new NullPointerException("contentType == null");
-        
-        final Matcher tokenMatcher = TOKEN_PATTERN.matcher(contentType);
-        
-        if(!tokenMatcher.lookingAt())
-            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
-        
-        final String type = tokenMatcher.group();
-        
-        if(contentType.charAt(tokenMatcher.end()) != '/')
-            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
-        
-        tokenMatcher.region(tokenMatcher.end() + 1, contentType.length());
-        
-        if(!tokenMatcher.lookingAt())
-            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
-        
-        final String subtype = tokenMatcher.group();
-        
-        final MediaType t = new MediaType(type, subtype);
-        
-        final Matcher paramMatcher = PARAMETER_PATTERN.matcher(contentType);
-        
-        paramMatcher.region(tokenMatcher.end(), contentType.length());
-        
-        return t;
-            
-        
-        
-//
-//        final Matcher m = CONTENT_TYPE.matcher(contentType);
-//        if (!m.matches())
-//            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
-//
-//        final MediaType ct = new MediaType(m.group(1), m.group(2));
-//
-//        if (m.group(3) != null) {
-//            System.out.println(m.group(3));
-//            final Matcher matcher = PARAMETER.matcher(m.group(3));
-//            while (matcher.find()) {
-//                // 1=key, 2=valueWithQuotes, 3=valueWithoutQuotes
-//                String name = matcher.group(1);
-//                String value = matcher.group(3) == null ? matcher.group(3) : matcher.group(2);
-//                
-//                if((value.startsWith("\"") && value.endsWith("\"")) || !TOKEN_PATTERN.matcher(value).matches())
-//                       throw new IllegalArgumentException("parameter value contains reserved characters: " + value);
-//
-//                ct.parameter(name, value);
-//            }
-//        }else {
-//            System.out.println(m.end(2));
-//            if(m.end(2) != contentType.length())
-//                    throw new IllegalArgumentException("Content-Type parameters do not match '; parameter=value' format: " + contentType.substring(m.end(2)));
-//        }
-//
 
+        final Matcher token = TOKEN_PATTERN.matcher(contentType);
+
+        if (!token.lookingAt())
+            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
+
+        final String type = token.group();
+
+        if (contentType.charAt(token.end()) != '/')
+            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
+
+        token.region(token.end() + 1, contentType.length());
+
+        if (!token.lookingAt())
+            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
+
+        final String subtype = token.group();
+
+        final MediaType mediaType = new MediaType();
+        mediaType.type = type;
+        mediaType.subtype = subtype;
+
+        final Matcher parameter = PARAMETER_PATTERN.matcher(contentType);
+
+        for (int index = token.end(); index < contentType.length(); index = parameter.end()) {
+            parameter.region(index, contentType.length());
+
+            if (!parameter.lookingAt())
+                throw new IllegalArgumentException("parameter does not match '; parameter=value' format: " + contentType.substring(index));
+
+            final String name = parameter.group(1);
+            final String value = parameter.group(2);
+
+            if (value.startsWith("\"") && value.endsWith("\""))
+                mediaType.parameters.put(name, value.substring(1, value.length() - 1));
+            else
+                mediaType.parameters.put(name, value);
+
+            if (name.equalsIgnoreCase("charset"))
+                mediaType.charset(Charset.forName(value));
+        }
+
+        return mediaType;
     }
-
-//  public static ContentType parse(final String contentType) {
-//      if(contentType == null)
-//          throw new NullPointerException("contentType == null");
-//      
-//      
-//      final Matcher m = CTYPE.matcher(contentType);
-//      
-//      if (!m.lookingAt()) 
-//        throw new IllegalArgumentException("Content-Type is not valid: " + contentType);
-//      
-//      final String type = m.group(1).toLowerCase(Locale.US);
-//      final String subtype = m.group(2).toLowerCase(Locale.US);
-//
-//      String charset = null;
-//      Matcher parameter = PARAMETER.matcher(contentType);
-//      for (int s = m.end(); s < contentType.length(); s = parameter.end()) {
-//        parameter.region(s, contentType.length());
-//        if (!parameter.lookingAt()) {
-//          throw new IllegalArgumentException("Parameter is not formatted correctly: \""
-//              + contentType.substring(s)
-//              + "\" for: \""
-//              + contentType
-//              + '"');
-//        }
-//
-//        String name = parameter.group(1);
-//        if (name == null || !name.equalsIgnoreCase("charset")) continue;
-//        String charsetParameter;
-//        String token = parameter.group(2);
-//        if (token != null) {
-//          // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
-//          charsetParameter = (token.startsWith("'") && token.endsWith("'") && token.length() > 2)
-//              ? token.substring(1, token.length() - 1)
-//              : token;
-//        } else {
-//          // Value is "double-quoted". That's valid and our regex group already strips the quotes.
-//          charsetParameter = parameter.group(3);
-//        }
-//        if (charset != null && !charsetParameter.equalsIgnoreCase(charset)) {
-//          throw new IllegalArgumentException("Multiple charsets defined: \""
-//              + charset
-//              + "\" and: \""
-//              + charsetParameter
-//              + "\" for: \""
-//              + contentType
-//              + '"');
-//        }
-//        charset = charsetParameter;
-//      }
-
-//      return new ContentType(contentType, type, subtype, null);
-//    }
-
-//    /**
-//     * Returns the {@code Content-Type} header (for example: {@code text/plain; charset=utf-8}).
-//     */
-//    @Override
-//    public String toString() {
-//        return contentType;
-//    }
 
     public static void main(String[] args) {
 
-        MediaType t = MediaType.parse("text/plain/");
-        
+        MediaType t = MediaType.parse("text/plain; abc=xyz ; charset=utf-8");
+
         System.out.println(t);
 
 //        String text = "\\";
