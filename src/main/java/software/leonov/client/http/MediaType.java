@@ -1,6 +1,7 @@
 package software.leonov.client.http;
 
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -22,69 +23,69 @@ import com.google.api.client.util.Preconditions;
  * <p>
  * No specific support comments is provided.
  */
-public final class ContentType {
-    // https://tools.ietf.org/html/rfc2045#section-5.1
-//    private static final String ASCII = "\\p{ASCII}";
-//    private static final String NOT_CNTRL = "[^\\p{Cntrl}]";
-//    private static final String NOT_TSPECIALS = "[^" + " " + "(" + ")" + "<" + ">" + "@" + "," + ";" + ":" + "\\" + "\"" + "/" + "\\[" + "\\]" + "?" + "=" + "]";
-//
-    private final static Pattern TOKEN = Pattern.compile("[\\p{ASCII}&&[^\\p{Cntrl} ()<>@,;:\"/\\[\\]?=]]+");
-//            "([\\p{ASCII}&&[^\\p{Cntrl} ;/=\\[\\]\\(\\)\\<\\>\\@\\,\\:\\\"\\?\\=]]+)";
+public final class MediaType {
 
-//    private final static Pattern CONTENT_TYPE = Pattern.compile("(?s)([^\\s/=;\"]+)/([^\\s/=;\"]+)\\s*(;.*)"); // parameters (G3) or null
+    // @formatter:off
+    /*
+     * https://tools.ietf.org/html/rfc2045#section-5.1
+     * -----------------------------------------------
+     * tspecials :=  "(" / ")" / "<" / ">" / "@" /
+     *               "," / ";" / ":" / "\" / <">
+     *                "/" / "[" / "]" / "?" / "="
+     */
+    // @formatter:on
 
-//    private final static Pattern PARAMETER = Pattern.compile("\\s*;\\s*([^\\s/=;\"]+)=(\"([^\"]*)\"|[^\\s;\"]*)"); // G2 (if quoted) and else G3
+    private static final String TSPECIALS = "(" + ")" + "<" + ">" + "@" + "," + ";" + ":" + "\\\\" + "\"" + "/" + "\\[" + "\\]" + "?" + "=";
 
-//    private final static String TOKEN2 = "[" + ASCII + "&&" + NOT_CNTRL + "&&" + NOT_TSPECIALS + "]";
-
-//    private static final Pattern CTYPE = Pattern.compile(TOKEN_OR_WILDCARD + "/" + TOKEN_OR_WILDCARD);
-//    private static final Pattern PARAMETER = Pattern.compile(";\\s*(?:" + TOKEN_OR_WILDCARD + "=(?:" + TOKEN_OR_WILDCARD + "|\"([^\"]*)\"))?");
-
-    private final static Pattern CONTENT_TYPE = Pattern.compile("(?s)\\s*([^\\s/=;\"]+)/([^\\s/=;\"]+)\\s*(;.*)?"); // parameters (G3) or null
-
-    private static final Pattern PARAMETER = Pattern.compile("\\s*;\\s*([^\\s/=;\"]+)=(" + "\"([^\"]*)\"|[^\\s;\"]*)"); // G2 (if quoted) and else G3
+    private final static String TOKEN = "[\\p{ASCII}&&[^\\p{Cntrl} " + TSPECIALS + "]]+";
+    private final static Pattern TOKEN_PATTERN = Pattern.compile(TOKEN);
+    //private final static Pattern TYPE_SUBTYPE = Pattern.compile("(" + TOKEN + ")/(" + TOKEN + ")");
+    
+    private final static String QUOTED = "\"([^\"\\r\\n]*)\"";
+    private final static String PARAMETER = ";\\s*" + TOKEN + "=" + "([^\"\\r\\n]*|"+ TOKEN + ")";
+    private static final Pattern PARAMETER_PATTERN = Pattern.compile(PARAMETER, Pattern.DOTALL);
 
     private final String type;
-    private final String subType;
+    private final String subtype;
 
     private Charset charset;
 
     private final Map<String, String> parameters = new TreeMap<>();
     private final Map<String, String> _parameters = Collections.unmodifiableMap(parameters);
 
-    ContentType(final String type, final String subtype) {
+    MediaType(final String type, final String subtype) {
         if (type == null)
             throw new NullPointerException("type == null");
         if (subtype == null)
             throw new NullPointerException("subtype == null");
 
-        if (type.equals("*") && !subtype.equals("*"))
+        if (subtype.equals("*") && !type.equals("*"))
             throw new IllegalArgumentException("cannot have a declared subtype with a wildcard type");
 
-        if (!TOKEN.matcher(type).matches())
+        if (!TOKEN_PATTERN.matcher(type).matches())
             throw new IllegalArgumentException("type contains reserved characters");
 
-        if (!TOKEN.matcher(subtype).matches())
+        if (!TOKEN_PATTERN.matcher(subtype).matches())
             throw new IllegalArgumentException("subtype contains reserved characters");
 
         this.type = type;
-        this.subType = subtype;
+        this.subtype = subtype;
     }
 
-    ContentType parameter(final String name, final String value) {
+    MediaType parameter(final String name, final String value) {
         if (name == null)
             throw new NullPointerException("name == null");
         if (value == null)
             throw new NullPointerException("value == null");
 
-        if (!TOKEN.matcher(name).matches())
+        if (!TOKEN_PATTERN.matcher(name).matches())
             throw new IllegalArgumentException("name contains reserved characters");
 
         parameters.put(name, value);
         return this;
     }
 
-    ContentType charset(final Charset charset) {
+    MediaType charset(final Charset charset) {
         if (charset == null)
             throw new NullPointerException("charset == null");
 
@@ -104,11 +105,11 @@ public final class ContentType {
      * Returns a specific media subtype (for example: {@code plain}, {@code png}, {@code mp4} or {@code xml}).
      */
     public String subtype() {
-        return subType;
+        return subtype;
     }
 
     /**
-     * Returns the charset of this media type, or null if this media type doesn't specify a charset.
+     * Returns the charset of this media type or null if this media type doesn't specify a charset.
      */
     public Charset charset() {
         return charset;
@@ -128,46 +129,74 @@ public final class ContentType {
     }
 
     /**
-     * Returns an unmodifiable {@code Map} of the parameters of this {@code ContentType}.
+     * Returns an unmodifiable {@code Map} of the parameters of this media type.
      * <p>
      * The parameter names are case-insensitive and the order of the request headers is <b>not</b> maintained.
      * 
-     * @return an unmodifiable {@code Map} of the parameters of this {@code ContentType}
+     * @return an unmodifiable {@code Map} of the parameters of this media type
      */
     public Map<String, String> parameters() {
         return _parameters;
     }
 
-    public static ContentType parse(final String contentType) {
+    public static MediaType parse(final String contentType) {
         if (contentType == null)
             throw new NullPointerException("contentType == null");
-
-        final Matcher m = CONTENT_TYPE.matcher(contentType);
-        if (!m.matches())
+        
+        final Matcher tokenMatcher = TOKEN_PATTERN.matcher(contentType);
+        
+        if(!tokenMatcher.lookingAt())
             throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
+        
+        final String type = tokenMatcher.group();
+        
+        if(contentType.charAt(tokenMatcher.end()) != '/')
+            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
+        
+        tokenMatcher.region(tokenMatcher.end() + 1, contentType.length());
+        
+        if(!tokenMatcher.lookingAt())
+            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
+        
+        final String subtype = tokenMatcher.group();
+        
+        final MediaType t = new MediaType(type, subtype);
+        
+        final Matcher paramMatcher = PARAMETER_PATTERN.matcher(contentType);
+        
+        paramMatcher.region(tokenMatcher.end(), contentType.length());
+        
+        return t;
+            
+        
+        
+//
+//        final Matcher m = CONTENT_TYPE.matcher(contentType);
+//        if (!m.matches())
+//            throw new IllegalArgumentException("Content-Type does not match 'type/subtype; parameter=value' format");
+//
+//        final MediaType ct = new MediaType(m.group(1), m.group(2));
+//
+//        if (m.group(3) != null) {
+//            System.out.println(m.group(3));
+//            final Matcher matcher = PARAMETER.matcher(m.group(3));
+//            while (matcher.find()) {
+//                // 1=key, 2=valueWithQuotes, 3=valueWithoutQuotes
+//                String name = matcher.group(1);
+//                String value = matcher.group(3) == null ? matcher.group(3) : matcher.group(2);
+//                
+//                if((value.startsWith("\"") && value.endsWith("\"")) || !TOKEN_PATTERN.matcher(value).matches())
+//                       throw new IllegalArgumentException("parameter value contains reserved characters: " + value);
+//
+//                ct.parameter(name, value);
+//            }
+//        }else {
+//            System.out.println(m.end(2));
+//            if(m.end(2) != contentType.length())
+//                    throw new IllegalArgumentException("Content-Type parameters do not match '; parameter=value' format: " + contentType.substring(m.end(2)));
+//        }
+//
 
-        final ContentType ct = new ContentType(m.group(1), m.group(2));
-
-        if (m.group(3) != null) {
-            System.out.println(m.group(3));
-            final Matcher matcher = PARAMETER.matcher(m.group(3));
-            while (matcher.find()) {
-                // 1=key, 2=valueWithQuotes, 3=valueWithoutQuotes
-                String name = matcher.group(1);
-                String value = matcher.group(3) == null ? matcher.group(3) : matcher.group(2);
-                
-                if((value.startsWith("\"") && value.endsWith("\"")) || !TOKEN.matcher(value).matches())
-                       throw new IllegalArgumentException("parameter value contains reserved characters: " + value);
-
-                ct.parameter(name, value);
-            }
-        }else {
-            System.out.println(m.end(2));
-            if(m.end(2) != contentType.length())
-                    throw new IllegalArgumentException("Content-Type parameters do not match '; parameter=value' format: " + contentType.substring(m.end(2)));
-        }
-
-        return ct;
     }
 
 //  public static ContentType parse(final String contentType) {
@@ -232,17 +261,32 @@ public final class ContentType {
 //    }
 
     public static void main(String[] args) {
-        final String test = "text/pla;in";
 
-        ContentType ctype = ContentType.parse(test);
+        MediaType t = MediaType.parse("text/plain/");
+        
+        System.out.println(t);
 
-        System.out.println(ctype.type());
-        System.out.println(ctype.subtype());
-        System.out.println(ctype.charset());
-        
-        
+//        String text = "\\";
+//        Pattern p = Pattern.compile("[\\p{ASCII}&&[^\\p{Cntrl} ;/=\\[\\]\\(\\)\\<\\>\\@\\,\\:\\\"\\?\\=]]+");
+//        Matcher m = p.matcher(text);
+//        
+//        System.out.println(m.matches());
+
+//        final String test = "text/pla;in";
+//
+//        MediaType ctype = MediaType.parse(test);
+//
+//        System.out.println(ctype.type());
+//        System.out.println(ctype.subtype());
+//        System.out.println(ctype.charset());
+
 //        HttpMediaType mediaType = new HttpMediaType("text/pl;ain");
 //        System.out.println(mediaType);
+    }
+
+    @Override
+    public String toString() {
+        return "MediaType [type=" + type + ", subtype=" + subtype + ", charset=" + charset + ", parameters=" + parameters + "]";
     }
 
 }
