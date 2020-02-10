@@ -242,7 +242,7 @@ public final class MultipartBody implements RequestBody {
      */
     public static final class Part {
 
-        private final Map<String, String> headers = new TreeMap<>();
+        private final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         private final Map<String, String> _headers = Collections.unmodifiableMap(headers);
         private final RequestBody body;
 

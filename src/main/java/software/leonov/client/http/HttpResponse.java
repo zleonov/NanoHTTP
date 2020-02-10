@@ -23,16 +23,12 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 
@@ -43,7 +39,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class HttpResponse implements AutoCloseable {
 
-    private static final Pattern CHARSET = Pattern.compile("(?i)charset=\\s*\"?([^\\s;\"]*)");
+    // private static final Pattern CHARSET = Pattern.compile("(?i)charset=\\s*\"?([^\\s;\"]*)");
 
     private Charset charset = StandardCharsets.ISO_8859_1;
 
@@ -62,6 +58,7 @@ public class HttpResponse implements AutoCloseable {
     private final Map<String, List<String>> headers;
     private final int statusCode;
     private final URL from;
+    private final HttpContentType httpContentType;
 
     HttpResponse(final HttpURLConnection connection) throws IOException {
         if (connection == null)
@@ -79,13 +76,28 @@ public class HttpResponse implements AutoCloseable {
         from = connection.getURL();
 
         if (contentType != null) {
-            final Matcher matcher = CHARSET.matcher(contentType);
-            if (matcher.find())
-                try {
-                    charset = Charset.forName(matcher.group(1));
-                } catch (final IllegalCharsetNameException | UnsupportedCharsetException e) {
-                }
-        }
+            HttpContentType ctype;
+            try {
+                ctype = HttpContentType.parse(contentType);
+            } catch (final IllegalArgumentException e) {
+                ctype = null;
+            }
+
+            if (ctype.charset() != null)
+                charset = ctype.charset();
+            else if (contentType.matches("(?i)charset\\s*=.+"))
+                charset = StandardCharsets.UTF_8;
+
+            httpContentType = ctype;
+
+//            final Matcher matcher = CHARSET.matcher(contentType);
+//            if (matcher.find())
+//                try {
+//                    charset = Charset.forName(matcher.group(1));
+//                } catch (final IllegalCharsetNameException | UnsupportedCharsetException e) {
+//                }
+        } else
+            httpContentType = null;
 
         if (statusCode < 200 || statusCode >= 300)
             throw new HttpResponseException(getStatusLine()).setServerResponse(getServerResponse()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
@@ -206,6 +218,17 @@ public class HttpResponse implements AutoCloseable {
      */
     public String getContentType() {
         return contentType;
+    }
+
+    /**
+     * Returns an {@code HttpContentType} parsed from the {@link #getContentType() Content-Type} string or {@code null} if
+     * it cannot be parsed.
+     * 
+     * @return an {@code HttpContentType} parsed from the {@link #getContentType() Content-Type} string or {@code null} if
+     *         it cannot be parsed
+     */
+    public HttpContentType parseContentType() {
+        return httpContentType;
     }
 
     /**
