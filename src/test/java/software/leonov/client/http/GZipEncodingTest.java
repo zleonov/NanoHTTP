@@ -86,7 +86,7 @@ class GZipEncodingTest {
     @Test
     void getInputStreamEncoded() throws IOException {
         try (final InputStream in = encoded.getInputStream()) {
-            final byte[] bytes = HttpResponse.toByteArray(in);
+            final byte[] bytes = ByteStream.toByteArray(in);
             assertArrayEquals(gz, bytes);
         }
     }
@@ -94,7 +94,7 @@ class GZipEncodingTest {
     @Test
     void getInputStreamStreaming() throws IOException {
         try (final InputStream in = streaming.getInputStream()) {
-            final byte[] bytes = HttpResponse.toByteArray(in);
+            final byte[] bytes = ByteStream.toByteArray(in);
             assertArrayEquals(gz, bytes);
         }
     }

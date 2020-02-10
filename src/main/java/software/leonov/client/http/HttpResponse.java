@@ -58,7 +58,7 @@ public class HttpResponse implements AutoCloseable {
     private final Map<String, List<String>> headers;
     private final int statusCode;
     private final URL from;
-    private final HttpContentType httpContentType;
+    private final MediaType mediaType;
 
     HttpResponse(final HttpURLConnection connection) throws IOException {
         if (connection == null)
@@ -74,30 +74,12 @@ public class HttpResponse implements AutoCloseable {
         contentType = connection.getContentType();
         encoding = connection.getContentEncoding();
         from = connection.getURL();
+        mediaType = contentType == null ? null : MediaType.tryParse(contentType);
 
-        if (contentType != null) {
-            HttpContentType ctype;
-            try {
-                ctype = HttpContentType.parse(contentType);
-            } catch (final IllegalArgumentException e) {
-                ctype = null;
-            }
-
-            if (ctype.charset() != null)
-                charset = ctype.charset();
-            else if (contentType.matches("(?i)charset\\s*=.+"))
-                charset = StandardCharsets.UTF_8;
-
-            httpContentType = ctype;
-
-//            final Matcher matcher = CHARSET.matcher(contentType);
-//            if (matcher.find())
-//                try {
-//                    charset = Charset.forName(matcher.group(1));
-//                } catch (final IllegalCharsetNameException | UnsupportedCharsetException e) {
-//                }
-        } else
-            httpContentType = null;
+        if (mediaType != null && mediaType.charset() != null)
+            charset = mediaType.charset();
+        else if (contentType != null && contentType.matches("(?i).+charset\\s*=.+"))
+            charset = StandardCharsets.UTF_8;
 
         if (statusCode < 200 || statusCode >= 300)
             throw new HttpResponseException(getStatusLine()).setServerResponse(getServerResponse()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
@@ -221,14 +203,14 @@ public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Returns an {@code HttpContentType} parsed from the {@link #getContentType() Content-Type} string or {@code null} if
-     * it cannot be parsed.
+     * Returns a {@code MediaType} parsed from the {@link #getContentType() Content-Type} header or {@code null} if it
+     * cannot be parsed.
      * 
-     * @return an {@code HttpContentType} parsed from the {@link #getContentType() Content-Type} string or {@code null} if
-     *         it cannot be parsed
+     * @return a {@code MediaType} parsed from the {@link #getContentType() Content-Type} header or {@code null} if it
+     *         cannot be parsed
      */
-    public HttpContentType parseContentType() {
-        return httpContentType;
+    public MediaType getMediaType() {
+        return mediaType;
     }
 
     /**
