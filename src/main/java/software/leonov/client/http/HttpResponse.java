@@ -39,10 +39,6 @@ import java.util.zip.GZIPInputStream;
  */
 public class HttpResponse implements AutoCloseable {
 
-    // private static final Pattern CHARSET = Pattern.compile("(?i)charset=\\s*\"?([^\\s;\"]*)");
-
-    private Charset charset = StandardCharsets.ISO_8859_1;
-
     private final HttpURLConnection connection;
 
     private final String encoding;
@@ -60,6 +56,8 @@ public class HttpResponse implements AutoCloseable {
     private final URL from;
     private final MediaType mediaType;
 
+    private Charset charset = StandardCharsets.ISO_8859_1; // default charset
+
     HttpResponse(final HttpURLConnection connection) throws IOException {
         if (connection == null)
             throw new NullPointerException("connection == null");
@@ -74,15 +72,15 @@ public class HttpResponse implements AutoCloseable {
         contentType = connection.getContentType();
         encoding = connection.getContentEncoding();
         from = connection.getURL();
-        mediaType = contentType == null ? null : MediaType.tryParse(contentType);
+        mediaType = MediaType.tryParse(contentType);
 
         if (mediaType != null && mediaType.charset() != null)
             charset = mediaType.charset();
-        else if (contentType != null && contentType.matches("(?i).+charset\\s*=.+"))
+        else if (contentType != null && contentType.matches("(?i).+charset\\s*=.+")) // if the content type is malformed but someone did try to define a charset
             charset = StandardCharsets.UTF_8;
 
         if (statusCode < 200 || statusCode >= 300)
-            throw new HttpResponseException(getStatusLine()).setServerResponse(getServerResponse()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
+            throw new HttpResponseException(getStatusLine()).setServerResponse(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
 
         final Map<String, List<String>> headers = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
         connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
@@ -95,8 +93,6 @@ public class HttpResponse implements AutoCloseable {
         hasBody = connection.getRequestMethod().equals("HEAD") || statusCode < 200 || statusCode == HTTP_NO_CONTENT || statusCode == HTTP_NOT_MODIFIED ? false : true;
 
         body = hasBody ? new ResponseBody() {
-
-            final Charset charset = getContentCharset();
 
             @Override
             public InputStream getInputStream() throws IOException {
@@ -383,7 +379,7 @@ public class HttpResponse implements AutoCloseable {
         return this;
     }
 
-    private String getServerResponse() throws IOException {
+    private String getErrorMessage() throws IOException {
         final InputStream in = connection.getErrorStream();
         return in == null ? null : new String(ByteStream.toByteArray(filter(in)), getContentCharset());
     }

@@ -42,8 +42,8 @@ public final class MediaType {
     private final String type;
     private final String subtype;
     private final Charset charset;
-    private final Iterable<String> keyOrder;
     private final Map<String, String> parameters;
+    private final Iterable<String> keyOrder;
     private final String contentType;
 
     private MediaType(final String type, final String subtype, final Charset charset, final Map<String, String> parameters, final Iterable<String> keyOrder) {
@@ -112,7 +112,7 @@ public final class MediaType {
 
     static MediaType tryParse(final String mediaType) {
         if (mediaType == null)
-            throw new NullPointerException("mediaType == null");
+            return null;
 
         try {
             return parse(mediaType);
@@ -171,7 +171,7 @@ public final class MediaType {
     }
 
     /**
-     * Returns the string representation of this media type suitable for use in an HTTP {@code Content-Type} header.
+     * Returns the string representation of this media type suitable for use as an HTTP {@code Content-Type} header.
      */
     @Override
     public String toString() {
@@ -188,16 +188,11 @@ public final class MediaType {
     }
 
     private static String unquoteIfNeeded(final String str) {
-        if (str.startsWith("\"") && str.endsWith("\""))
-            return str.substring(1, str.length() - 1);
-        return str;
+        return str.startsWith("\"") && str.endsWith("\"") ? str.substring(1, str.length() - 1) : str;
     }
 
     private static String quoteIfNeeded(final String str) {
-        if (TOKEN.matcher(str).matches())
-            return str;
-        else
-            return "\"" + str + "\"";
+        return TOKEN.matcher(str).matches() ? str : "\"" + str + "\"";
     }
 
     private static boolean isLegalCharsetName(final String charset) {
