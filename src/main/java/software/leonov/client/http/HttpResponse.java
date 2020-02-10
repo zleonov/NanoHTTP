@@ -76,8 +76,6 @@ public class HttpResponse implements AutoCloseable {
 
         if (mediaType != null && mediaType.charset() != null)
             charset = mediaType.charset();
-        else if (contentType != null && contentType.matches("(?i).+charset\\s*=.+")) // if the content type is malformed but someone did try to define a charset
-            charset = StandardCharsets.UTF_8;
 
         if (statusCode < 200 || statusCode >= 300)
             throw new HttpResponseException(getStatusLine()).setServerResponse(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
@@ -96,7 +94,7 @@ public class HttpResponse implements AutoCloseable {
 
             @Override
             public InputStream getInputStream() throws IOException {
-                return filter(connection.getInputStream());
+                return unzip(connection.getInputStream());
             }
 
             @Override
@@ -163,6 +161,10 @@ public class HttpResponse implements AutoCloseable {
     /**
      * Returns the charset specified in the {@code Content-Type} header field, or {@link StandardCharsets#ISO_8859_1
      * ISO_8859_1} if it is unspecified, unsupported, or cannot be discerned.
+     * <p>
+     * As stated in <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5" target="_blank">RFC-7231</a>: <i>In
+     * practice, resource owners do not always properly configure their origin server to provide the correct Content-Type
+     * for a given representation.</i> Users may wish to call {@link #setContentCharset(Charset)} to override the charset.
      * 
      * @return the charset specified in the {@code Content-Type} header field, or {@link StandardCharsets#ISO_8859_1
      *         ISO_8859_1} if it is unspecified, unsupported, or cannot be discerned
@@ -191,6 +193,8 @@ public class HttpResponse implements AutoCloseable {
 
     /**
      * Returns the value of the {@code Content-Type} header field or {@code null} if it is not known.
+     * <p>
+     * Use {@link #getMediaType()} to parse the {@code Content-Type} header.
      * 
      * @return the value of the {@code Content-Type} header field or {@code null} if it is not known
      */
@@ -199,11 +203,14 @@ public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Returns a {@code MediaType} parsed from the {@link #getContentType() Content-Type} header or {@code null} if it
-     * cannot be parsed.
+     * Returns a {@code MediaType} parsed from the {@link #getContentType() Content-Type} header or {@code null} if it is
+     * not known or cannot be parsed.
+     * <p>
+     * If this method returns {@code null} but the {@code Content-Type} header exists the value can still be retrieved by
+     * calling the {@link #getContentType()} method.
      * 
-     * @return a {@code MediaType} parsed from the {@link #getContentType() Content-Type} header or {@code null} if it
-     *         cannot be parsed
+     * @return a {@code MediaType} parsed from the {@link #getContentType() Content-Type} header or {@code null} if it is
+     *         not known or cannot be parsed
      */
     public MediaType getMediaType() {
         return mediaType;
@@ -381,10 +388,10 @@ public class HttpResponse implements AutoCloseable {
 
     private String getErrorMessage() throws IOException {
         final InputStream in = connection.getErrorStream();
-        return in == null ? null : new String(ByteStream.toByteArray(filter(in)), getContentCharset());
+        return in == null ? null : new String(ByteStream.toByteArray(unzip(in)), getContentCharset());
     }
 
-    private InputStream filter(final InputStream in) throws IOException {
+    private InputStream unzip(final InputStream in) throws IOException {
         if (in == null)
             throw new NullPointerException("in == null");
 

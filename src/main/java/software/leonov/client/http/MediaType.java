@@ -15,8 +15,11 @@ import java.util.regex.Pattern;
  * suitable for use as an
  * <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1" target="_blank">HTTP</a>
  * <a href="http://en.wikipedia.org/wiki/Internet_media_type" target="_blank">Content-Type</a> header defined in
- * <a href="http://www.ietf.org/rfc/rfc2045.txt" target="_blank">RFC-2045</a> and
- * <a href="http://www.ietf.org/rfc/rfc2046.txt" target="_blank">RFC-2046</a>.
+ * <a href="https://tools.ietf.org/html/rfc2045" target="_blank">RFC-2045</a> and
+ * <a href="https://tools.ietf.org/html/rfc2046" target="_blank">RFC-2046</a>.
+ * <p>
+ * The type, subtype, parameter names, and the value of the {@code charset} parameter (if present) are normalized to
+ * lowercase, all others values are left as-is.
  */
 public final class MediaType {
 
@@ -47,15 +50,6 @@ public final class MediaType {
     private final String contentType;
 
     private MediaType(final String type, final String subtype, final Charset charset, final Map<String, String> parameters, final Iterable<String> keyOrder) {
-        if (type == null)
-            throw new NullPointerException("type == null");
-        if (subtype == null)
-            throw new NullPointerException("subtype == null");
-        if (parameters == null)
-            throw new NullPointerException("parameters == null");
-        if (keyOrder == null)
-            throw new NullPointerException("keyOrder == null");
-
         this.type = type;
         this.subtype = subtype;
         this.parameters = parameters;
@@ -81,22 +75,16 @@ public final class MediaType {
     /**
      * Returns the charset of this media type or {@code null} if this media type doesn't specify a charset or it is not
      * supported.
+     * <p>
+     * If the charset is specified but cannot be discerned this method will return {@code null}, calling
+     * {@link #parameters()}{@link Map#get(Object) .get("charset")} will return the original value for reference or
+     * debugging purposes.
+     * 
+     * @return the charset of this media type or {@code null} if this media type doesn't specify a charset or it is not
+     *         supported
      */
     public Charset charset() {
         return charset;
-    }
-
-    /**
-     * Returns the value of the parameter with the specified name or {@code null} if it is not defined.
-     * 
-     * @param name the name of the parameter
-     * @return the value of the parameter with the specified name or {@code null} if it is not defined
-     */
-    public String parameter(final String name) {
-        if (name == null)
-            throw new NullPointerException("name == null");
-
-        return parameters.get(name);
     }
 
     /**
@@ -110,12 +98,12 @@ public final class MediaType {
         return parameters;
     }
 
-    static MediaType tryParse(final String mediaType) {
-        if (mediaType == null)
+    static MediaType tryParse(final String str) {
+        if (str == null)
             return null;
 
         try {
-            return parse(mediaType);
+            return parse(str);
         } catch (final IllegalArgumentException e) {
             return null;
         }
@@ -124,17 +112,17 @@ public final class MediaType {
     /**
      * Returns a new {@code MediaType} parsed from the specified string.
      * 
-     * @param mediaType the media type string, for example: {@code text/plain; charset=utf-8}
+     * @param str the media type string, for example: {@code text/plain; charset=utf-8}
      * @return a new {@code MediaType} parsed from the specified string
      */
-    public static MediaType parse(final String mediaType) {
-        if (mediaType == null)
-            throw new NullPointerException("mediaType == null");
+    public static MediaType parse(final String str) {
+        if (str == null)
+            throw new NullPointerException("str == null");
 
-        final Matcher matcher = TYPE_SUBTYPE.matcher(mediaType);
+        final Matcher matcher = TYPE_SUBTYPE.matcher(str);
 
         if (!matcher.lookingAt())
-            throw new IllegalArgumentException("cannot parse type/subtype: " + mediaType);
+            throw new IllegalArgumentException("cannot parse type/subtype: " + str);
 
         final String type = matcher.group(1);
         final String subtype = matcher.group(2);
@@ -144,15 +132,15 @@ public final class MediaType {
 
         final Map<String, String> parameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         final Set<String> order = new LinkedHashSet<>();
-        final Matcher parameter = PARAMETER.matcher(mediaType);
+        final Matcher parameter = PARAMETER.matcher(str);
 
         Charset charset = null;
 
-        for (int index = matcher.end(); index < mediaType.length(); index = parameter.end()) {
-            parameter.region(index, mediaType.length());
+        for (int index = matcher.end(); index < str.length(); index = parameter.end()) {
+            parameter.region(index, str.length());
 
             if (!parameter.lookingAt())
-                throw new IllegalArgumentException("cannot parse parameters at index " + index + ": " + mediaType.substring(index));
+                throw new IllegalArgumentException("cannot parse parameters at index " + index + ": " + str.substring(index));
 
             final String name = parameter.group(1).toLowerCase(Locale.US);
             final String value = unquoteIfNeeded(parameter.group(2));
@@ -172,6 +160,8 @@ public final class MediaType {
 
     /**
      * Returns the string representation of this media type suitable for use as an HTTP {@code Content-Type} header.
+     * 
+     * @return the string representation of this media type suitable for use as an HTTP {@code Content-Type} header
      */
     @Override
     public String toString() {
@@ -199,21 +189,13 @@ public final class MediaType {
         if (charset.isEmpty())
             return false;
 
-        for (int i = 0; i < charset.length(); i++) {
-            final char c = charset.charAt(i);
-            if (!(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-' && i != 0 || c == '+' && i != 0 || c == ':' && i != 0 || c == '_' && i != 0 || c == '.' && i != 0))
+        for (int index = 0; index < charset.length(); index++) {
+            final char c = charset.charAt(index);
+            if (!(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-' && index > 0 || c == '+' && index > 0 || c == ':' && index > 0 || c == '_' && index > 0 || c == '.' && index > 0))
                 return false;
         }
 
         return true;
     }
 
-    public static void main(String[] args) {
-
-        MediaType t = MediaType.parse("text/plain; abc=\"x]yz\" ; charset=utf-8 ");
-
-        System.out.println(t.parameter("abc"));
-
-        System.out.println(t);
-    }
 }
