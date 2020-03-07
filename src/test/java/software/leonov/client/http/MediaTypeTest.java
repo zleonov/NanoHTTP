@@ -1714,7 +1714,7 @@ class MediaTypeTest {
     @Test
     public void testGetParameters() {
         assertEquals(Collections.emptyMap(), MediaType.parse("text/plain").parameters());
-        assertEquals(newHashMap("one", "1", "2", "two", "three", "3", "charset", "utf-8"), MediaType.parse("application/atom+xml; one=1; 2=two; three=3; charset=utf-8").parameters());
+        assertEquals(mapOf("one", "1", "2", "two", "three", "3", "charset", "utf-8"), MediaType.parse("application/atom+xml; one=1; 2=two; three=3; charset=utf-8").parameters());
     }
 
     @Test
@@ -1879,8 +1879,19 @@ class MediaTypeTest {
         final String type = "text/plain; something=\"cr@zy\"; something-else=\"crazy with spaces\"; and-another-thing=\"\"; normal-thing=foo";
         assertEquals(type, MediaType.parse(type).toString());
     }
+    
+//    @Test
+//    public void testQuotedEscaped() {
+//        final String s = "abc/efg; param1=\"param\"on e\"";
+//        com.google.common.net.MediaType guava = com.google.common.net.MediaType.parse(s);
+//        System.out.println("guava:  " + guava);
+//        MediaType me = MediaType.parse(s);
+//        System.out.println("me:     " + me);
+//        HttpMediaType google = new HttpMediaType(s);
+//        System.out.println("google: " + google);
+//    }
 
-    private static Map<String, String> newHashMap(final String... mappings) {
+    private static Map<String, String> mapOf(final String... mappings) {
         final Map<String, String> map = new HashMap<>();
         for (int i = 0; i < mappings.length; i += 2)
             map.put(mappings[i], mappings[i + 1]);

@@ -25,10 +25,8 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 
@@ -37,7 +35,7 @@ import java.util.zip.GZIPInputStream;
  * 
  * @author Zhenya Leonov
  */
-public class HttpResponse implements AutoCloseable {
+final public class HttpResponse implements AutoCloseable {
 
     private final HttpURLConnection connection;
 
@@ -77,12 +75,12 @@ public class HttpResponse implements AutoCloseable {
         if (mediaType != null && mediaType.charset() != null)
             charset = mediaType.charset();
 
-        if (statusCode < 200 || statusCode >= 300)
-            throw new HttpResponseException(getStatusLine()).setServerResponse(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
-
-        final Map<String, List<String>> headers = new TreeMap<>(Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+        final Map<String, List<String>> headers = new CaseInsensitiveMap<>();
         connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
         this.headers = Collections.unmodifiableMap(headers);
+
+        if (statusCode < 200 || statusCode >= 300)
+            throw new HttpResponseException(getStatusLine()).setServerResponse(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
 
         date = connection.getDate();
         expiration = connection.getExpiration();

@@ -72,4 +72,4 @@ What's next?
 
 Can I help?
 ===========
-Yes! Send me your patches and contributions. I will come up with an Contributor License Agreement. 
+Yes! Send me your patches and contributions. I will come up with a Contributor License Agreement. 

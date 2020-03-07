@@ -2,11 +2,8 @@ package software.leonov.client.http;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +17,10 @@ import java.util.regex.Pattern;
  * <p>
  * The type, subtype, parameter names, and the value of the {@code charset} parameter (if present) are normalized to
  * lowercase, all others values are left as-is.
+ * <p>
+ * Parameters with duplicate names are not supported. If a parameter is defined multiple times only the last value will
+ * be parsed. No specific support for <i>comments</i> (values delimited by parentheses) is provided.
+ * 
  */
 public final class MediaType {
 
@@ -46,15 +47,13 @@ public final class MediaType {
     private final String subtype;
     private final Charset charset;
     private final Map<String, String> parameters;
-    private final Iterable<String> keyOrder;
     private final String contentType;
 
-    private MediaType(final String type, final String subtype, final Charset charset, final Map<String, String> parameters, final Iterable<String> keyOrder) {
+    private MediaType(final String type, final String subtype, final Charset charset, final Map<String, String> parameters) {
         this.type = type;
         this.subtype = subtype;
         this.parameters = parameters;
         this.charset = charset;
-        this.keyOrder = keyOrder;
         this.contentType = toContentType();
     }
 
@@ -130,8 +129,9 @@ public final class MediaType {
         if (type.equals("*") && !subtype.equals("*"))
             throw new IllegalArgumentException("cannot have a declared subtype with a wildcard type");
 
-        final Map<String, String> parameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        final Set<String> order = new LinkedHashSet<>();
+        // final Map<String, String> parameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        final Map<String, String> parameters = new CaseInsensitiveMap<>();
+
         final Matcher parameter = PARAMETER.matcher(str);
 
         Charset charset = null;
@@ -151,11 +151,9 @@ public final class MediaType {
             } else
                 parameters.put(name, value);
 
-            order.add(name);
-
         }
 
-        return new MediaType(type.toLowerCase(Locale.US), subtype.toLowerCase(Locale.US), charset, Collections.unmodifiableMap(parameters), order);
+        return new MediaType(type.toLowerCase(Locale.US), subtype.toLowerCase(Locale.US), charset, Collections.unmodifiableMap(parameters));
     }
 
     /**
@@ -171,7 +169,7 @@ public final class MediaType {
     private String toContentType() {
         final StringBuilder builder = new StringBuilder().append(type).append('/').append(subtype);
 
-        for (final String key : keyOrder)
+        for (final String key : parameters.keySet())
             builder.append("; ").append(key).append("=").append(quoteIfNeeded(parameters.get(key)));
 
         return builder.toString();

@@ -84,14 +84,14 @@ public final class HttpRequestWithBody extends HttpRequest {
      * Sends the HTTP request.
      * <p>
      * If the {@code Message-Body} {@link RequestBody#getContentEncoding() Content-Encoding} is known, and the
-     * {@link #setContentEncoding(String) Content-Encoding} header has not already been set, it will automatically be
+     * {@code Content-Encoding} header has not already been {@link #setContentEncoding(String) set}, it will automatically be
      * updated.
      * <p>
      * If the {@code Message-Body} {@link RequestBody#length() Content-Length} is known, and the
-     * {@link #setContentLength(long) Content-Length} header has not already been set, it will automatically be updated.
+     * {@code Content-Length} header has not already been {@link #setContentLength(long) set}, it will automatically be updated.
      * <p>
      * If the {@code Message-Body} {@link RequestBody#getContentType() Content-Type} is known, and the
-     * {@link #setContentType(String) Content-Type} header has not already been set, it will automatically be updated.
+     * {@code Content-Type} header has not already been {@link #setContentType(String) set}, it will automatically be updated.
      * 
      * @return the response from the server
      * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#getStatusCode()

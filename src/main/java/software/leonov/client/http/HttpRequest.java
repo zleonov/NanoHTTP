@@ -28,7 +28,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -124,7 +123,7 @@ public class HttpRequest {
      * @return an unmodifiable {@code Map} of the general request headers for this request
      */
     public Map<String, String> headers() {
-        final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        final Map<String, String> headers = new CaseInsensitiveMap<>();
         connection.getRequestProperties().forEach((name, values) -> headers.put(name, values.get(0)));
         return Collections.unmodifiableMap(headers);
     }
