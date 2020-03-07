@@ -9,9 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -108,7 +108,7 @@ public final class MultipartBody implements RequestBody {
          * @return a new {@code MultipartBody} composed of the {@code Part}s added to this builder
          */
         public MultipartBody build() {
-            if(super.parts.isEmpty())
+            if (super.parts.isEmpty())
                 throw new IllegalArgumentException("multipart/mixed content must have at least one body part");
             return new MultipartBody(super.parts, super.contentType, super.boundary);
         }
@@ -230,7 +230,7 @@ public final class MultipartBody implements RequestBody {
          * @return a new {@code MultipartBody} composed of the input fields and files added to this builder
          */
         public MultipartBody build() {
-            if(super.parts.isEmpty())
+            if (super.parts.isEmpty())
                 throw new IllegalArgumentException("multipart/form-data content must have at least one field");
             return new MultipartBody(super.parts, super.contentType, super.boundary);
         }
@@ -242,7 +242,7 @@ public final class MultipartBody implements RequestBody {
      */
     public static final class Part {
 
-        private final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        private final Map<String, String> headers = new CaseInsensitiveMap<>(Locale.US);
         private final Map<String, String> _headers = Collections.unmodifiableMap(headers);
         private final RequestBody body;
 
@@ -285,7 +285,7 @@ public final class MultipartBody implements RequestBody {
          * Returns an unmodifiable {@code Map} of the headers for this <i>body</i> {@code Part}.
          * <p>
          * The keys are strings (which are case-insensitive) that represent the header field names, the values are strings that
-         * represents the corresponding field values. The order of the headers is <b>not</b> maintained.
+         * represents the corresponding field values.
          * 
          * @return an unmodifiable {@code Map} of the headers for this <i>body</i> {@code Part}
          */

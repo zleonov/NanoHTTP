@@ -89,7 +89,7 @@ public final class MediaType {
     /**
      * Returns an unmodifiable {@code Map} of the parameters of this media type.
      * <p>
-     * The parameter names are case-insensitive and the order of the parameters is <b>not</b> maintained.
+     * The parameter names are case-insensitive.
      * 
      * @return an unmodifiable {@code Map} of the parameters of this media type
      */
@@ -129,8 +129,7 @@ public final class MediaType {
         if (type.equals("*") && !subtype.equals("*"))
             throw new IllegalArgumentException("cannot have a declared subtype with a wildcard type");
 
-        // final Map<String, String> parameters = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        final Map<String, String> parameters = new CaseInsensitiveMap<>();
+        final Map<String, String> parameters = new CaseInsensitiveMap<>(Locale.US);
 
         final Matcher parameter = PARAMETER.matcher(str);
 

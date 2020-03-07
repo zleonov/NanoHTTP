@@ -114,7 +114,7 @@ public class HttpRequest {
      * Returns an unmodifiable {@code Map} of the request headers for this request.
      * <p>
      * The keys are strings (which are case-insensitive) that represent the request-header field names, the values are
-     * strings that represents the corresponding field values. The order of the request headers is <b>not</b> maintained.
+     * strings that represents the corresponding field values.
      * <p>
      * <b>Note:</b> Some request headers like {@code Pragma}, {@code Cache-Control}, {@code Connection},
      * {@code Proxy-Connection} (not an exhaustive list) are not set until this request is executed, others may not be
@@ -123,7 +123,7 @@ public class HttpRequest {
      * @return an unmodifiable {@code Map} of the general request headers for this request
      */
     public Map<String, String> headers() {
-        final Map<String, String> headers = new CaseInsensitiveMap<>();
+        final Map<String, String> headers = new CaseInsensitiveMap<>(Locale.US);
         connection.getRequestProperties().forEach((name, values) -> headers.put(name, values.get(0)));
         return Collections.unmodifiableMap(headers);
     }

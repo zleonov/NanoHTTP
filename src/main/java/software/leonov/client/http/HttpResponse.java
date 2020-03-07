@@ -26,6 +26,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
@@ -75,7 +76,7 @@ final public class HttpResponse implements AutoCloseable {
         if (mediaType != null && mediaType.charset() != null)
             charset = mediaType.charset();
 
-        final Map<String, List<String>> headers = new CaseInsensitiveMap<>();
+        final Map<String, List<String>> headers = new CaseInsensitiveMap<>(Locale.US);
         connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
         this.headers = Collections.unmodifiableMap(headers);
 
@@ -294,8 +295,7 @@ final public class HttpResponse implements AutoCloseable {
      * Returns an unmodifiable {@code Map} of the response headers sent by the server.
      * <p>
      * The keys are strings (which are case-insensitive) that represent the response-header field names, the values are
-     * unmodifiable {@code List}s of strings that represents the corresponding field values. The order of the response
-     * headers is <b>not</b> maintained.
+     * unmodifiable {@code List}s of strings that represents the corresponding field values.
      * 
      * @return an unmodifiable {@code Map} of the response headers sent by the server
      */
