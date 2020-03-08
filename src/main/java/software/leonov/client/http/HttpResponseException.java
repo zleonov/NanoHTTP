@@ -30,12 +30,12 @@ public class HttpResponseException extends IOException {
     private static final long serialVersionUID = 1016328592873099463L;
 
     private int statusCode = -1;
-    private String serverResponse = null;
+    private ResponseBody response = null;
     private URL from = null;
     private Map<String, List<String>> headers = null;
 
     /**
-     * Constructs an {@code HttpException} with the specified detail message.
+     * Constructs an {@code HttpResponseException} with the specified detail message.
      *
      * @param message the detail message or {@code null}
      */
@@ -44,7 +44,7 @@ public class HttpResponseException extends IOException {
     }
 
     /**
-     * Constructs an {@code HttpException} with the specified detail message and cause.
+     * Constructs an {@code HttpResponseException} with the specified detail message and cause.
      *
      * @param message the detail message or {@code null}
      * @param cause   the cause, which can be later retrieved by {@link #getCause()} or {@code null}
@@ -54,13 +54,13 @@ public class HttpResponseException extends IOException {
     }
 
     /**
-     * Sets the error message returned from the server.
+     * Sets the response returned from the server.
      * 
-     * @param serverResponse the error message returned from the server or {@code null}
-     * @return this {@code HttpException} instance
+     * @param response the response returned from the server or {@code null}
+     * @return this {@code HttpResponseException} instance
      */
-    HttpResponseException setServerResponse(final String serverResponse) {
-        this.serverResponse = serverResponse;
+    HttpResponseException setServerResponse(final ResponseBody response) {
+        this.response = response;
         return this;
     }
 
@@ -68,7 +68,7 @@ public class HttpResponseException extends IOException {
      * Sets the response headers sent by the server.
      * 
      * @param headers the response headers sent by the server or {@code null}
-     * @return this {@code HttpException} instance
+     * @return this {@code HttpResponseException} instance
      */
     HttpResponseException setHeaders(final Map<String, List<String>> headers) {
         this.headers = headers;
@@ -79,7 +79,7 @@ public class HttpResponseException extends IOException {
      * Sets the {@code Status-Code} return by the server.
      * 
      * @param statusCode the {@code Status-Code} return by the server or -1
-     * @return this {@code HttpException} instance
+     * @return this {@code HttpResponseException} instance
      */
     HttpResponseException setStatusCode(final int statusCode) {
         this.statusCode = statusCode;
@@ -90,7 +90,7 @@ public class HttpResponseException extends IOException {
      * Sets the {@code URL} responsible for this exception.
      * 
      * @param from the {@code URL} responsible for this exception or {@code null}
-     * @return this {@code HttpException} instance
+     * @return this {@code HttpResponseException} instance
      */
     HttpResponseException from(final URL from) {
         this.from = from;
@@ -98,12 +98,12 @@ public class HttpResponseException extends IOException {
     }
 
     /**
-     * Returns the error message sent by the server or {@code null} if it is not available.
+     * Returns the response sent by the server or {@code null} if it is not available.
      * 
-     * @return the error message sent by the server or {@code null}
+     * @return the response sent by the server or {@code null} if it is not available
      */
-    public String getServerReponse() {
-        return serverResponse;
+    public ResponseBody getServerReponse() {
+        return response;
     }
 
     /**

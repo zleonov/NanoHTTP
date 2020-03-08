@@ -18,6 +18,7 @@ package software.leonov.client.http;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -80,8 +81,31 @@ final public class HttpResponse implements AutoCloseable {
         connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
         this.headers = Collections.unmodifiableMap(headers);
 
-        if (statusCode < 200 || statusCode >= 300)
-            throw new HttpResponseException(getStatusLine()).setServerResponse(getErrorMessage()).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
+        if (statusCode < 200 || statusCode >= 300) {
+
+            final InputStream in = connection.getErrorStream();
+
+            throw new HttpResponseException(getStatusLine()).setServerResponse(in == null ? null : new ResponseBody() {
+
+                final byte[] bytes = ByteStream.toByteArray(unzip(in));
+                final String message = new String(toByteArray(), charset);
+
+                @Override
+                public InputStream getInputStream() throws IOException {
+                    return new ByteArrayInputStream(bytes);
+                }
+
+                @Override
+                public String asString() throws IOException {
+                    return message;
+                }
+
+                @Override
+                public byte[] toByteArray() throws IOException {
+                    return bytes;
+                }
+            }).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
+        }
 
         date = connection.getDate();
         expiration = connection.getExpiration();
@@ -384,10 +408,10 @@ final public class HttpResponse implements AutoCloseable {
         return this;
     }
 
-    private String getErrorMessage() throws IOException {
-        final InputStream in = connection.getErrorStream();
-        return in == null ? null : new String(ByteStream.toByteArray(unzip(in)), getContentCharset());
-    }
+//    private String getErrorMessage() throws IOException {
+//        final InputStream in = connection.getErrorStream();
+//        return in == null ? null : new String(ByteStream.toByteArray(unzip(in)), getContentCharset());
+//    }
 
     private InputStream unzip(final InputStream in) throws IOException {
         if (in == null)
