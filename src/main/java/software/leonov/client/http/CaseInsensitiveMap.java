@@ -110,23 +110,6 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
         }
     }
 
-    /**
-     * Returns {@code true} if this map should remove its eldest entry. Default implementation always returns {@code false}.
-     * See <a href=
-     * "https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashMap.html#removeEldestEntry-java.util.Map.Entry-"
-     * target="_blank">LinkedHashMap.removeEldestEntry(Map.Entry)</a>
-     * 
-     * for details.
-     *
-     * @param eldest the least recently inserted or least recently accessed entry in the map (depending on the ordering
-     *               mode)
-     * 
-     * @return {@code true} if the {@code eldest} entry should be removed or {@code false} if it should be retained
-     */
-    protected boolean removeEldestEntry(final Map.Entry<String, V> eldest) {
-        return false;
-    }
-
     @Override
     public int size() {
         return delegate.size();
@@ -285,7 +268,7 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
     private LCString toLowerCase(final Object o) {
         return new LCString(o);
     }
-    
+
     private final class LCString {
 
         private final String s;
