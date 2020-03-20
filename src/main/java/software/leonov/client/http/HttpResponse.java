@@ -104,6 +104,14 @@ final public class HttpResponse implements AutoCloseable {
                 public byte[] toByteArray() throws IOException {
                     return bytes;
                 }
+
+                @Override
+                public String asString(final Charset charset) throws IOException {
+                    if (charset == null)
+                        throw new NullPointerException("charset == null");
+
+                    return new String(toByteArray(), charset);
+                }
             }).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
         }
 
@@ -128,6 +136,14 @@ final public class HttpResponse implements AutoCloseable {
             @Override
             public byte[] toByteArray() throws IOException {
                 return ByteStream.toByteArray(getInputStream());
+            }
+
+            @Override
+            public String asString(final Charset charset) throws IOException {
+                if (charset == null)
+                    throw new NullPointerException("charset == null");
+
+                return new String(toByteArray(), charset);
             }
         } : null;
 
@@ -386,26 +402,6 @@ final public class HttpResponse implements AutoCloseable {
      */
     public boolean hasBody() {
         return hasBody;
-    }
-
-    /**
-     * Override {@link #getContentCharset() Content-Type} charset returned by the server. Calling this method will ensure
-     * {@link #getBody() getMessageBody()}{@link ResponseBody#asString() .asString()} will use the specified charset to
-     * parse the {@code Message-Body}.
-     * <p>
-     * As stated in <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5" target="_blank">RFC-7231</a>: <i>In
-     * practice, resource owners do not always properly configure their origin server to provide the correct Content-Type
-     * for a given representation.</i>
-     * 
-     * @param charset the charset to use
-     * @return this {@code HttpResponse} instance
-     */
-    public HttpResponse setContentCharset(final Charset charset) {
-        if (charset == null)
-            throw new NullPointerException("charset == null");
-
-        this.charset = charset;
-        return this;
     }
 
 //    private String getErrorMessage() throws IOException {

@@ -17,6 +17,7 @@ package software.leonov.client.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 /**
  * The {@code Message-Body} of an HTTP response.
@@ -55,6 +56,19 @@ public interface ResponseBody {
      * @throws IOException if an I/O error occurs
      */
     public String asString() throws IOException;
+
+    /**
+     * Parses and returns this {@code Message-Body} as a string using the specified charset.
+     * <p>
+     * As stated in <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5" target="_blank">RFC-7231</a>: <i>In
+     * practice, resource owners do not always properly configure their origin server to provide the correct Content-Type
+     * for a given representation.</i> This method allows users to override {@link HttpResponse#getContentCharset()
+     * Content-Type charset} returned by the server.
+     * 
+     * @return this {@code Message-Body} as a string
+     * @throws IOException if an I/O error occurs
+     */
+    public String asString(final Charset charset) throws IOException;
 
     /**
      * Returns a byte array containing all the bytes read from this {@code Message-Body}.
