@@ -1,7 +1,5 @@
 package software.leonov.client.http;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -23,7 +21,7 @@ import java.util.Set;
  */
 final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implements Cloneable {
 
-    private LinkedHashMap<LCString, V> delegate;
+    private LinkedHashMap<Key, V> delegate;
     private Locale locale;
 
     private Set<Map.Entry<String, V>> entrySet;
@@ -124,7 +122,7 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
         } catch (final CloneNotSupportedException e) {
             throw new InternalError();
         }
-        m.delegate = (LinkedHashMap<LCString, V>) delegate.clone();
+        m.delegate = (LinkedHashMap<Key, V>) delegate.clone();
         m.locale = (Locale) locale.clone();
         m.entrySet = null;
         return m;
@@ -157,7 +155,7 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
                 final Map.Entry<?, ?> e = (Entry<?, ?>) o;
 
                 try {
-                    final LCString key = toLowerCase(e.getKey());
+                    final Key key = toLowerCase(e.getKey());
                     return delegate.containsKey(key) && Objects.equals(delegate.get(key), e.getValue());
                 } catch (final ClassCastException ex) {
                 }
@@ -173,7 +171,7 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
 
         @Override
         public boolean removeAll(final Collection<?> c) {
-            checkNotNull(c, "c == null");
+            //checkNotNull(c, "c == null");
             boolean modified = false;
 
             for (final Iterator<?> i = c.iterator(); i.hasNext();)
@@ -185,7 +183,7 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
         @SuppressWarnings("unchecked")
         @Override
         public boolean retainAll(final Collection<?> c) {
-            checkNotNull(c, "c == null");
+            //checkNotNull(c, "c == null");
             final Map<String, V> m = new CaseInsensitiveMap<>(locale);
 
             for (final Object o : c)
@@ -201,7 +199,7 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
 
         @Override
         public Iterator<Entry<String, V>> iterator() {
-            final Iterator<Entry<LCString, V>> itor = delegate.entrySet().iterator();
+            final Iterator<Entry<Key, V>> itor = delegate.entrySet().iterator();
             return new Iterator<Map.Entry<String, V>>() {
 
                 @Override
@@ -211,7 +209,7 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
 
                 @Override
                 public Entry<String, V> next() {
-                    final Entry<LCString, V> e = itor.next();
+                    final Entry<Key, V> e = itor.next();
 
                     return new Map.Entry<String, V>() {
 
@@ -265,27 +263,27 @@ final public class CaseInsensitiveMap<V> extends AbstractMap<String, V> implemen
         }
     }
 
-    private LCString toLowerCase(final Object o) {
-        return new LCString(o);
+    private Key toLowerCase(final Object o) {
+        return new Key(o);
     }
 
-    private final class LCString {
+    private final class Key {
 
         private final String s;
         private final String lcstr;
 
-        public LCString(final Object o) {
+        public Key(final Object o) {
             this(o == null ? null : o.toString());
         }
 
-        public LCString(final String s) {
+        public Key(final String s) {
             this.s = s;
             lcstr = s == null ? null : s.toLowerCase(getLocale());
         }
 
         @Override
         public boolean equals(final Object obj) {
-            return obj == null || getClass() != obj.getClass() ? false : this == obj || Objects.equals(this.lcstr, ((CaseInsensitiveMap<?>.LCString) obj).lcstr);
+            return obj == null || getClass() != obj.getClass() ? false : this == obj || Objects.equals(this.lcstr, ((CaseInsensitiveMap<?>.Key) obj).lcstr);
         }
 
         public String get() {

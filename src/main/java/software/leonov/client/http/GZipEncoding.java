@@ -40,7 +40,6 @@ import java.util.zip.GZIPOutputStream;
  * or
  * 
  * <pre>
- * 
  * http.post(dest).setContentType(contentType).setBody(GZipEncoding.encode(body)).send(); // Content-Encoding and Content-Length will be set automatically
  * </pre>
  * 
