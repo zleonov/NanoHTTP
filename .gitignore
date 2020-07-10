@@ -1,13 +1,15 @@
 ###############
 ### Eclipse ###
 ###############
-bin/
-.settings/
+/bin/
+/.settings/
+.project
+.classpath
 
 #############
 ### Maven ###
 #############
-target/
+/target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -18,10 +20,10 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-temp/
-.properties
-.project
-.classpath
+###############
+### Project ###
+###############
+/temp/
+/test/
+/ignore/
 TODO
-old
-3rd-party
