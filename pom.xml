@@ -3,13 +3,13 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>software.leonov.common</groupId>
+    <groupId>software.leonov.net</groupId>
     <artifactId>NanoHTTP</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <!-- default packaging is a jar <packaging>jar</packaging> -->
 
     <name>NanoHTTP</name>
-    <description>NanoHTTP: A simple, lightweight HTTP client for Java</description>
+    <description>NanoHTTP: A simple, lightweight HTTP client for Java.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,9 +17,14 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven-javadoc-plugin.version>3.0.0</maven-javadoc-plugin.version>
         <maven-source-plugin.version>3.0.0</maven-source-plugin.version>
-        <java.src.path>3rd-party/java-sources</java.src.path>
-        <guava.src.path>3rd-party/guava-sources</guava.src.path>
     </properties>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <dependencies>
         <dependency>
@@ -37,10 +42,10 @@
         </dependency>
 
         <dependency>
-
-            <groupId>net.java.truevfs</groupId>
-            <artifactId>truevfs-driver-tar-gzip</artifactId>
-            <version>0.12.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.1.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -69,7 +74,7 @@
                 <version>${maven-javadoc-plugin.version}</version>
 
                 <configuration>
-                    <sourcepath>${project.build.sourceDirectory}:${java.src.path}:${guava.src.path}</sourcepath>
+                    <sourcepath>${project.build.sourceDirectory}</sourcepath>
                     <subpackages>software.leonov</subpackages>
                     <quiet>false</quiet>
                     <notimestamp>true</notimestamp>
@@ -87,6 +92,9 @@
                         ]]>
                     </doctitle>
                     <detectJavaApiLink>true</detectJavaApiLink>
+                    <links>
+                        <link>https://google.github.io/guava/releases/26.0-jre/api/docs/</link>
+                    </links>
                 </configuration>
                 <executions>
                     <execution>
