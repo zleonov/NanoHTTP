@@ -41,20 +41,20 @@ final public class HttpResponse implements AutoCloseable {
 
     private final HttpURLConnection connection;
 
-    private final String encoding;
-    private final String contentType;
-    private final String reason;
-    private final String statusLine;
-    private final long length;
-    private final long date;
-    private final long expiration;
-    private final long ifModifiedSince;
-    private final boolean hasBody;
-    private final ResponseBody body;
+    private final String                    encoding;
+    private final String                    contentType;
+    private final String                    reason;
+    private final String                    statusLine;
+    private final long                      length;
+    private final long                      date;
+    private final long                      expiration;
+    private final long                      ifModifiedSince;
+    private final boolean                   hasBody;
+    private final ResponseBody              body;
     private final Map<String, List<String>> headers;
-    private final int statusCode;
-    private final URL from;
-    private final MediaType mediaType;
+    private final int                       statusCode;
+    private final URL                       from;
+    private final MediaType                 mediaType;
 
     private Charset charset = StandardCharsets.ISO_8859_1; // default charset
 
@@ -66,13 +66,13 @@ final public class HttpResponse implements AutoCloseable {
 
         statusCode = connection.getResponseCode();
 
-        length = connection.getContentLengthLong();
-        statusLine = connection.getHeaderField(0);
-        reason = connection.getResponseMessage();
+        length      = connection.getContentLengthLong();
+        statusLine  = connection.getHeaderField(0);
+        reason      = connection.getResponseMessage();
         contentType = connection.getContentType();
-        encoding = connection.getContentEncoding();
-        from = connection.getURL();
-        mediaType = MediaType.tryParse(contentType);
+        encoding    = connection.getContentEncoding();
+        from        = connection.getURL();
+        mediaType   = MediaType.tryParse(contentType);
 
         if (mediaType != null && mediaType.charset() != null)
             charset = mediaType.charset();
@@ -87,7 +87,7 @@ final public class HttpResponse implements AutoCloseable {
 
             throw new HttpResponseException(getStatusLine()).setServerResponse(in == null ? null : new ResponseBody() {
 
-                final byte[] bytes = ByteStream.toByteArray(unzip(in));
+                final byte[] bytes   = ByteStream.toByteArray(unzip(in));
                 final String message = new String(toByteArray(), charset);
 
                 @Override
@@ -115,8 +115,8 @@ final public class HttpResponse implements AutoCloseable {
             }).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
         }
 
-        date = connection.getDate();
-        expiration = connection.getExpiration();
+        date            = connection.getDate();
+        expiration      = connection.getExpiration();
         ifModifiedSince = connection.getIfModifiedSince();
 
         hasBody = connection.getRequestMethod().equals("HEAD") || statusCode < 200 || statusCode == HTTP_NO_CONTENT || statusCode == HTTP_NOT_MODIFIED ? false : true;
@@ -150,30 +150,61 @@ final public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Closes any open input or error streams to the server.
+     * Closes any open underlying resources to the server.
+     * 
+     * @throws IOException if an error occurs
      */
     @Override
-    public void close() {
+    public void close() throws IOException {
 
-        InputStream in = null;
+        IOException ex         = null;
+        InputStream in         = null;
+        boolean     disconnect = false;
+
         try {
-            in = connection.getInputStream();
-            if (in != null)
-                ByteStream.discard(in);
+            if ((in = connection.getInputStream()) != null)
+                disconnect = in.read() != -1;
         } catch (final IOException e) {
+            ex         = e;
+            disconnect = true;
         } finally {
-            ByteStream.closeQuietly(in);
+            if (in != null)
+                try {
+                    in.close();
+                } catch (final IOException e) {
+                    if (ex == null)
+                        ex = e;
+                    else
+                        ex.addSuppressed(e);
+                }
         }
 
         try {
-            in = connection.getErrorStream();
-            if (in != null)
-                ByteStream.discard(in);
+            if ((in = connection.getErrorStream()) != null)
+                disconnect = in.read() != -1;
         } catch (final IOException e) {
+            if (ex == null)
+                ex = e;
+            else
+                ex.addSuppressed(e);
+            disconnect = true;
         } finally {
-            ByteStream.closeQuietly(in);
+            if (in != null)
+                try {
+                    in.close();
+                } catch (final IOException e) {
+                    if (ex == null)
+                        ex = e;
+                    else
+                        ex.addSuppressed(e);
+                }
         }
 
+        if (disconnect)
+            connection.disconnect();
+
+        if (ex != null)
+            throw ex;
     }
 
     /**
