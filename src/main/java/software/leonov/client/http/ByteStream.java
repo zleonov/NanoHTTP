@@ -20,6 +20,14 @@ final class ByteStream {
     }
 
     static byte[] toByteArray(final InputStream in) throws IOException {
+        try {
+            return toByteArray(in, Integer.MAX_VALUE);
+        } catch (final SizeLimitExceededException e) {
+            throw new AssertionError(); // cannot happen
+        }
+    }
+
+    static byte[] toByteArray(final InputStream in, final int maxSize) throws IOException, SizeLimitExceededException {
         int length = BUFFER_SIZE;
 
         byte[] bytes = new byte[length];
@@ -29,6 +37,9 @@ final class ByteStream {
         do {
             while ((n = in.read(bytes, total, length - total)) > 0)
                 total += n;
+
+            if (total > maxSize)
+                throw new SizeLimitExceededException();
 
             if ((n = in.read()) != -1) {
                 bytes          = Arrays.copyOf(bytes, (length *= 2) > Integer.MAX_VALUE ? Integer.MAX_VALUE : length);

@@ -78,4 +78,14 @@ public interface ResponseBody {
      */
     public byte[] toByteArray() throws IOException;
 
+    /**
+     * Returns a byte array containing all the bytes read from this {@code Message-Body}.
+     * 
+     * @param maxSize the size threshold
+     * @return a byte array containing all the bytes read from this {@code Message-Body}
+     * @throws SizeLimitExceededException if the {@code maxSize} threshold is exceeded
+     * @throws IOException                if an I/O error occurs
+     */
+    public byte[] toByteArray(final int maxSize) throws IOException, SizeLimitExceededException;
+
 }

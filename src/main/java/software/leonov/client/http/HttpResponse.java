@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -58,6 +59,13 @@ final public class HttpResponse implements AutoCloseable {
 
     private Charset charset = StandardCharsets.ISO_8859_1; // default charset
 
+    private final List<InputStream> streams = new ArrayList<>();
+
+    private InputStream register(final InputStream in) {
+        streams.add(in);
+        return in;
+    }
+
     HttpResponse(final HttpURLConnection connection) throws IOException {
         if (connection == null)
             throw new NullPointerException("connection == null");
@@ -83,7 +91,7 @@ final public class HttpResponse implements AutoCloseable {
 
         if (statusCode < 200 || statusCode >= 300) {
 
-            final InputStream in = connection.getErrorStream();
+            final InputStream in = register(connection.getErrorStream());
 
             throw new HttpResponseException(getStatusLine()).setServerResponse(in == null ? null : new ResponseBody() {
 
@@ -106,6 +114,11 @@ final public class HttpResponse implements AutoCloseable {
                 }
 
                 @Override
+                public byte[] toByteArray(final int maxSize) throws IOException, SizeLimitExceededException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
                 public String asString(final Charset charset) throws IOException {
                     if (charset == null)
                         throw new NullPointerException("charset == null");
@@ -125,7 +138,7 @@ final public class HttpResponse implements AutoCloseable {
 
             @Override
             public InputStream getInputStream() throws IOException {
-                return unzip(connection.getInputStream());
+                return unzip(register(connection.getInputStream()));
             }
 
             @Override
@@ -136,6 +149,11 @@ final public class HttpResponse implements AutoCloseable {
             @Override
             public byte[] toByteArray() throws IOException {
                 return ByteStream.toByteArray(getInputStream());
+            }
+
+            @Override
+            public byte[] toByteArray(final int maxSize) throws IOException, SizeLimitExceededException {
+                return ByteStream.toByteArray(getInputStream(), maxSize);
             }
 
             @Override
@@ -150,61 +168,92 @@ final public class HttpResponse implements AutoCloseable {
     }
 
     /**
-     * Closes any open underlying resources to the server.
+     * Closes any open underlying resources and open streams.
      * 
      * @throws IOException if an error occurs
      */
     @Override
-    public void close() throws IOException {
+    public void close() throws Exception {
 
-        IOException ex         = null;
-        InputStream in         = null;
-        boolean     disconnect = false;
+        /*
+         * The specification and behavior of HttpURLConnection.close() and HttpURLConnection.disconnect() is somewhat ambiguous
+         * and varies between JVM implementations. Generally, JVMs maintain a connection pool so that connections to the same
+         * server can be reused. However, a connection is only eligible for reuse if all the data from any of its opened input
+         * streams has been fully consumed and the streams have been closed. If unread bytes remain, the connection cannot be
+         * reused, and the JVM will create a new HttpURLConnection instance for subsequent calls to the server.
+         * 
+         * Exactly how and when the JVM cleanups "dirty" connections is likewise unclear. Typically
+         * HttpURLConnection.disconnect() has to be called to ensure cleanup of any underlying resources before the connection
+         * is discarded. We do our best to eagerly handle cleanup to avoid any "resource leaks".
+         */
 
-        try {
-            if ((in = connection.getInputStream()) != null)
+        Throwable t          = null;
+        boolean   disconnect = false;
+
+        for (final InputStream in : streams) {
+            try {
+                /*
+                 * There is now definitive way to test if more data is available from the input stream. InputStream.availabe() only
+                 * returns an estimate of the number of bytes which can be read without "blocking". The only way to know for sure if a
+                 * stream has been consumed is if it returns -1 (EOF) on any subsequent read attempts.
+                 * 
+                 * We consider the connection "dirty" if we are able to read even a single byte.
+                 */
                 disconnect = in.read() != -1;
-        } catch (final IOException e) {
-            ex         = e;
-            disconnect = true;
-        } finally {
-            if (in != null)
-                try {
-                    in.close();
-                } catch (final IOException e) {
-                    if (ex == null)
-                        ex = e;
-                    else
-                        ex.addSuppressed(e);
-                }
-        }
+            } catch (final Throwable e) {
+                /*
+                 * If any errors occur whatsoever we cannot be sure of the state of the connection and likewise consider it "dirty".
+                 */
+                disconnect = true;
 
-        try {
-            if ((in = connection.getErrorStream()) != null)
-                disconnect = in.read() != -1;
-        } catch (final IOException e) {
-            if (ex == null)
-                ex = e;
-            else
-                ex.addSuppressed(e);
-            disconnect = true;
-        } finally {
-            if (in != null)
-                try {
-                    in.close();
-                } catch (final IOException e) {
-                    if (ex == null)
-                        ex = e;
-                    else
-                        ex.addSuppressed(e);
-                }
+                if (t == null)
+                    t = e;
+                else
+                    t.addSuppressed(e);
+            } finally {
+                if (in != null)
+                    try {
+                        /*
+                         * Finally we try to close the stream. In the overwhelming case scenario the stream has been consumed without error by
+                         * the client and will silently close.
+                         */
+                        in.close();
+                    } catch (final Throwable e) {
+                        /*
+                         * Same logic as the error handling above.
+                         */
+                        disconnect = true;
+
+                        if (t == null)
+                            t = e;
+                        else
+                            t.addSuppressed(e);
+                    }
+            }
         }
 
         if (disconnect)
             connection.disconnect();
 
-        if (ex != null)
-            throw ex;
+        if (t != null) {
+            /*
+             * We are all but guaranteed that any caught Exception is an IOException, but technically
+             */
+            if (t instanceof IOException)
+                throw (IOException) t;
+            else if (t instanceof RuntimeException)
+                /*
+                 * we have to handle the off chance that we caught a RuntimeException
+                 */
+                throw (RuntimeException) t;
+            else if (t instanceof Error)
+                /*
+                 * or Error.
+                 */
+                throw (Error) t;
+            else
+                throw new AssertionError(t); // cannot happen
+        }
     }
 
     /**
@@ -234,7 +283,8 @@ final public class HttpResponse implements AutoCloseable {
      * <p>
      * As stated in <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5" target="_blank">RFC-7231</a>: <i>In
      * practice, resource owners do not always properly configure their origin server to provide the correct Content-Type
-     * for a given representation.</i> Users may wish to call {@link #setContentCharset(Charset)} to override the charset.
+     * for a given representation.</i> Users may to specify their own charset when reading the response body, for example:
+     * {@link ResponseBody#asString(Charset)} to override the charset.
      * 
      * @return the charset specified in the {@code Content-Type} header field, or {@link StandardCharsets#ISO_8859_1
      *         ISO_8859_1} if it is unspecified, unsupported, or cannot be discerned
