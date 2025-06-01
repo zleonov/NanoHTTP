@@ -173,7 +173,7 @@ final public class HttpResponse implements AutoCloseable {
      * @throws IOException if an error occurs
      */
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
 
         /*
          * The specification and behavior of HttpURLConnection.close() and HttpURLConnection.disconnect() is somewhat ambiguous
