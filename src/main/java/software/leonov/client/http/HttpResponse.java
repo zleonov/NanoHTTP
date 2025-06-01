@@ -172,87 +172,102 @@ final public class HttpResponse implements AutoCloseable {
      * 
      * @throws IOException if an error occurs
      */
+//    @Override
+//    public void close() throws IOException {
+//
+//        /*
+//         * The specification and behavior of HttpURLConnection.close() and HttpURLConnection.disconnect() is somewhat ambiguous
+//         * and varies between JVM implementations. Generally, JVMs maintain a connection pool so that connections to the same
+//         * server can be reused. However, a connection is only eligible for reuse if all the data from any of its opened input
+//         * streams has been fully consumed and the streams have been closed. If unread bytes remain, the connection cannot be
+//         * reused, and the JVM will create a new HttpURLConnection instance for subsequent calls to the server.
+//         * 
+//         * Exactly how and when the JVM cleanups "dirty" connections is likewise unclear. Typically
+//         * HttpURLConnection.disconnect() has to be called to ensure cleanup of any underlying resources before the connection
+//         * is discarded. We do our best to eagerly handle cleanup to avoid any "resource leaks".
+//         */
+//
+//        Throwable t          = null;
+//        boolean   disconnect = false;
+//
+//        for (final InputStream in : streams) {
+//            try {
+//                /*
+//                 * There is now definitive way to test if more data is available from the input stream. InputStream.availabe() only
+//                 * returns an estimate of the number of bytes which can be read without "blocking". The only way to know for sure if a
+//                 * stream has been consumed is if it returns -1 (EOF) on any subsequent read attempts.
+//                 * 
+//                 * We consider the connection "dirty" if we are able to read even a single byte.
+//                 */
+//                disconnect = in.read() != -1;
+//            } catch (final Throwable e) {
+//                /*
+//                 * If any errors occur whatsoever we cannot be sure of the state of the connection and likewise consider it "dirty".
+//                 */
+//                disconnect = true;
+//
+//                if (t == null)
+//                    t = e;
+//                else
+//                    t.addSuppressed(e);
+//            } finally {
+//                if (in != null)
+//                    try {
+//                        /*
+//                         * Finally we try to close the stream. In the overwhelming case scenario the stream has been consumed without error by
+//                         * the client and will silently close.
+//                         */
+//                        in.close();
+//                    } catch (final Throwable e) {
+//                        /*
+//                         * Same logic as the error handling above.
+//                         */
+//                        disconnect = true;
+//
+//                        if (t == null)
+//                            t = e;
+//                        else
+//                            t.addSuppressed(e);
+//                    }
+//            }
+//        }
+//
+//        if (disconnect)
+//            connection.disconnect();
+//
+//        if (t != null) {
+//            /*
+//             * We are all but guaranteed that any caught Exception is an IOException, but technically
+//             */
+//            if (t instanceof IOException)
+//                throw (IOException) t;
+//            else if (t instanceof RuntimeException)
+//                /*
+//                 * we have to handle the off chance that we caught a RuntimeException
+//                 */
+//                throw (RuntimeException) t;
+//            else if (t instanceof Error)
+//                /*
+//                 * or Error.
+//                 */
+//                throw (Error) t;
+//            else
+//                throw new AssertionError(t); // cannot happen
+//        }
+//    }
+
+    /**
+     * Closes any open input or error streams to the server.
+     */
     @Override
-    public void close() throws IOException {
-
-        /*
-         * The specification and behavior of HttpURLConnection.close() and HttpURLConnection.disconnect() is somewhat ambiguous
-         * and varies between JVM implementations. Generally, JVMs maintain a connection pool so that connections to the same
-         * server can be reused. However, a connection is only eligible for reuse if all the data from any of its opened input
-         * streams has been fully consumed and the streams have been closed. If unread bytes remain, the connection cannot be
-         * reused, and the JVM will create a new HttpURLConnection instance for subsequent calls to the server.
-         * 
-         * Exactly how and when the JVM cleanups "dirty" connections is likewise unclear. Typically
-         * HttpURLConnection.disconnect() has to be called to ensure cleanup of any underlying resources before the connection
-         * is discarded. We do our best to eagerly handle cleanup to avoid any "resource leaks".
-         */
-
-        Throwable t          = null;
-        boolean   disconnect = false;
-
+    public void close() {
         for (final InputStream in : streams) {
-            try {
-                /*
-                 * There is now definitive way to test if more data is available from the input stream. InputStream.availabe() only
-                 * returns an estimate of the number of bytes which can be read without "blocking". The only way to know for sure if a
-                 * stream has been consumed is if it returns -1 (EOF) on any subsequent read attempts.
-                 * 
-                 * We consider the connection "dirty" if we are able to read even a single byte.
-                 */
-                disconnect = in.read() != -1;
-            } catch (final Throwable e) {
-                /*
-                 * If any errors occur whatsoever we cannot be sure of the state of the connection and likewise consider it "dirty".
-                 */
-                disconnect = true;
+            if (in != null)
+                try {
+                    in.close();
+                } catch (Throwable t) {
 
-                if (t == null)
-                    t = e;
-                else
-                    t.addSuppressed(e);
-            } finally {
-                if (in != null)
-                    try {
-                        /*
-                         * Finally we try to close the stream. In the overwhelming case scenario the stream has been consumed without error by
-                         * the client and will silently close.
-                         */
-                        in.close();
-                    } catch (final Throwable e) {
-                        /*
-                         * Same logic as the error handling above.
-                         */
-                        disconnect = true;
-
-                        if (t == null)
-                            t = e;
-                        else
-                            t.addSuppressed(e);
-                    }
-            }
-        }
-
-        if (disconnect)
-            connection.disconnect();
-
-        if (t != null) {
-            /*
-             * We are all but guaranteed that any caught Exception is an IOException, but technically
-             */
-            if (t instanceof IOException)
-                throw (IOException) t;
-            else if (t instanceof RuntimeException)
-                /*
-                 * we have to handle the off chance that we caught a RuntimeException
-                 */
-                throw (RuntimeException) t;
-            else if (t instanceof Error)
-                /*
-                 * or Error.
-                 */
-                throw (Error) t;
-            else
-                throw new AssertionError(t); // cannot happen
+                }
         }
     }
 
