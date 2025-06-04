@@ -33,6 +33,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
+import software.leonov.client.http.guava.RateLimiter;
+
 /**
  * An HTTP request with no {@code Message-Body}: {@code HEAD}, {@code GET}, {@code OPTIONS}, or {@code TRACE}.
  * 
@@ -41,8 +43,9 @@ import javax.net.ssl.SSLSocketFactory;
 public class HttpRequest {
 
     protected final HttpURLConnection connection;
+    protected final RateLimiter       rateLimiter;
 
-    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) throws IOException {
+    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter) throws IOException {
 
         if (!url.getProtocol().substring(0, 4).toLowerCase(Locale.US).equals("http"))
             throw new IllegalArgumentException("unsupported protocol: " + url.getProtocol());
@@ -60,6 +63,8 @@ public class HttpRequest {
         }
 
         connection.setDoOutput(false);
+
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -178,6 +183,8 @@ public class HttpRequest {
     public HttpResponse send() throws IOException {
 
         try {
+            if (rateLimiter != null)
+                rateLimiter.acquire();
             connection.connect();
             final HttpResponse response = new HttpResponse(connection);
             return response;
@@ -204,7 +211,7 @@ public class HttpRequest {
         if (password == null)
             throw new NullPointerException("password == null");
 
-        final String data = username + ":" + password;
+        final String data   = username + ":" + password;
         final String base64 = Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
         return setHeader("Authorization", "Basic " + base64);
     }

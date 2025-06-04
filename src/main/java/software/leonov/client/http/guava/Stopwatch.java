@@ -1,27 +1,8 @@
-package software.leonov.client.http;
+package software.leonov.client.http.guava;
 
-/*
- * Copyright (C) 2008 The Guava Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
-
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MICROSECONDS;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  * @since 10.0
  */
 
-@SuppressWarnings("GoodTime") // lots of violations
+//@SuppressWarnings("GoodTime") // lots of violations
 public final class Stopwatch {
     private final Ticker ticker;
     private boolean      isRunning;
@@ -124,7 +105,7 @@ public final class Stopwatch {
     }
 
     Stopwatch(Ticker ticker) {
-        this.ticker = checkNotNull(ticker, "ticker");
+        this.ticker = Objects.requireNonNull(ticker, "ticker");
     }
 
     /**
@@ -142,7 +123,7 @@ public final class Stopwatch {
      * @throws IllegalStateException if the stopwatch is already running.
      */
     public Stopwatch start() {
-        if(isRunning)
+        if (isRunning)
             throw new IllegalStateException("This stopwatch is already running.");
         isRunning = true;
         startTick = ticker.read();
@@ -157,7 +138,7 @@ public final class Stopwatch {
      */
     public Stopwatch stop() {
         long tick = ticker.read();
-        if(!isRunning)
+        if (!isRunning)
             throw new IllegalStateException("This stopwatch is already stopped.");
         isRunning     = false;
         elapsedNanos += tick - startTick;
@@ -194,46 +175,4 @@ public final class Stopwatch {
         return desiredUnit.convert(elapsedNanos(), NANOSECONDS);
     }
 
-    private static TimeUnit chooseUnit(long nanos) {
-        if (DAYS.convert(nanos, NANOSECONDS) > 0) {
-            return DAYS;
-        }
-        if (HOURS.convert(nanos, NANOSECONDS) > 0) {
-            return HOURS;
-        }
-        if (MINUTES.convert(nanos, NANOSECONDS) > 0) {
-            return MINUTES;
-        }
-        if (SECONDS.convert(nanos, NANOSECONDS) > 0) {
-            return SECONDS;
-        }
-        if (MILLISECONDS.convert(nanos, NANOSECONDS) > 0) {
-            return MILLISECONDS;
-        }
-        if (MICROSECONDS.convert(nanos, NANOSECONDS) > 0) {
-            return MICROSECONDS;
-        }
-        return NANOSECONDS;
-    }
-
-    private static String abbreviate(TimeUnit unit) {
-        switch (unit) {
-        case NANOSECONDS:
-            return "ns";
-        case MICROSECONDS:
-            return "\u03bcs"; // μs
-        case MILLISECONDS:
-            return "ms";
-        case SECONDS:
-            return "s";
-        case MINUTES:
-            return "min";
-        case HOURS:
-            return "h";
-        case DAYS:
-            return "d";
-        default:
-            throw new AssertionError();
-        }
-    }
 }

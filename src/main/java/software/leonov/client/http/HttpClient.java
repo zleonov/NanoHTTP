@@ -34,6 +34,8 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import software.leonov.client.http.guava.RateLimiter;
+
 /**
  * The entry point for making HTTP requests. Instances of this class can be obtained by calling {@link #defaultClient()}
  * or using a {@link #builder() builder}.
@@ -44,14 +46,14 @@ import javax.net.ssl.X509TrustManager;
 public final class HttpClient {
 
     private final Map<String, List<String>> headers;
-    private final Duration connectTimeout;
-    private final boolean followRedirects;
-    private final Duration readTimeout;
-    private final boolean useCaches;
-    private final Credentials credentials;
-    private final Proxy proxy;
-    
-    private RateLimiter
+    private final Duration                  connectTimeout;
+    private final boolean                   followRedirects;
+    private final Duration                  readTimeout;
+    private final boolean                   useCaches;
+    private final Credentials               credentials;
+    private final Proxy                     proxy;
+
+    private RateLimiter rateLimiter;
 
     private HostnameVerifier hostnameVerifier;
     private SSLSocketFactory sslSocketFactory;
@@ -59,17 +61,18 @@ public final class HttpClient {
     private static final HttpClient defaultClient = builder().build();
 
     private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final Credentials credentials,
-            final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) {
+            final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter) {
 
-        this.proxy = proxy;
-        this.headers = headers;
-        this.useCaches = useCaches;
-        this.followRedirects = followRedirects;
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
-        this.credentials = credentials;
+        this.proxy            = proxy;
+        this.headers          = headers;
+        this.useCaches        = useCaches;
+        this.followRedirects  = followRedirects;
+        this.connectTimeout   = connectTimeout;
+        this.readTimeout      = readTimeout;
+        this.credentials      = credentials;
         this.hostnameVerifier = hostnameVerifier;
         this.sslSocketFactory = sslSocketFactory;
+        this.rateLimiter      = rateLimiter;
     }
 
     /**
@@ -87,6 +90,7 @@ public final class HttpClient {
      * <li>SSLSocketFactory: default</li>
      * <li>{@code Accept}: default (will be set when requests are executed)</li>
      * <li>{@code User-Agent}: default (will be set when requests are executed)</li>
+     * <li>Unlimited requests per second</li>
      * </ul>
      * 
      * @return an {@code HttpClient} instance with default settings
@@ -121,7 +125,7 @@ public final class HttpClient {
     public HttpRequestWithBody delete(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter));
     }
 
     /**
@@ -146,7 +150,7 @@ public final class HttpClient {
     public HttpRequest get(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter));
     }
 
     /**
@@ -180,7 +184,7 @@ public final class HttpClient {
     public HttpRequest head(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter));
     }
 
     /**
@@ -205,7 +209,7 @@ public final class HttpClient {
     public HttpRequest options(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter));
     }
 
     /**
@@ -261,7 +265,7 @@ public final class HttpClient {
     public HttpRequestWithBody post(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter));
     }
 
     /**
@@ -290,7 +294,7 @@ public final class HttpClient {
     public HttpRequestWithBody put(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter));
     }
 
     /**
@@ -320,7 +324,7 @@ public final class HttpClient {
     public HttpRequest trace(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory));
+        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter));
     }
 
     private <T extends HttpRequest> T setDefaults(final T request) {
@@ -364,10 +368,10 @@ public final class HttpClient {
         private final Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         private boolean followRedirects = true;
-        private boolean useCaches = true;
+        private boolean useCaches       = true;
 
         private Duration connectTimeout = Duration.ofSeconds(60);
-        private Duration readTimeout = Duration.ofSeconds(60);
+        private Duration readTimeout    = Duration.ofSeconds(60);
 
         private Credentials credentials = null;
 
@@ -375,6 +379,8 @@ public final class HttpClient {
         private SSLSocketFactory sslSocketFactory = null;
 
         private Proxy proxy = null;
+
+        private RateLimiter rateLimiter = null;
 
         private Builder() {
         };
@@ -385,7 +391,7 @@ public final class HttpClient {
          * @return a new {@code HttpClient} configured by this builder
          */
         public HttpClient build() {
-            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, credentials, hostnameVerifier, sslSocketFactory);
+            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, credentials, hostnameVerifier, sslSocketFactory, rateLimiter);
         }
 
         /**
@@ -619,6 +625,23 @@ public final class HttpClient {
                 throw new NullPointerException("sslSocketFactory == null");
 
             this.sslSocketFactory = sslSocketFactory;
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of HTTP requests that can be made per second.
+         * <p>
+         * This is typically used to enforce rate limiting on outgoing requests to avoid overwhelming a server or exceeding API
+         * quotas.
+         *
+         * @param rate the maximum number of requests allowed per second
+         * @return this {@code Builder} instance
+         */
+        public Builder setMaxRequestsPerSecond(final double rate) {
+            if (rate <= 0)
+                throw new IllegalArgumentException("rate <= 0");
+
+            this.rateLimiter = RateLimiter.create(rate);
             return this;
         }
 

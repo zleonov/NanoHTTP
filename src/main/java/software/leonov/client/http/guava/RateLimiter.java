@@ -1,4 +1,4 @@
-package software.leonov.client.http;
+package software.leonov.client.http.guava;
 
 /*
  * Copyright (C) 2012 The Guava Authors
@@ -21,7 +21,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -120,7 +119,7 @@ public abstract class RateLimiter {
 
 //  @VisibleForTesting
     static RateLimiter create(double permitsPerSecond, SleepingStopwatch stopwatch) {
-        RateLimiter rateLimiter = new SmoothBursty(stopwatch, 1.0 /* maxBurstSeconds */);
+        RateLimiter rateLimiter = new SmoothRateLimiter.SmoothBursty(stopwatch, 1.0 /* maxBurstSeconds */);
         rateLimiter.setRate(permitsPerSecond);
         return rateLimiter;
     }
@@ -149,7 +148,7 @@ public abstract class RateLimiter {
      * @throws IllegalArgumentException if {@code permitsPerSecond} is negative or zero or {@code
      *     warmupPeriod}             is negative
      */
-    @SuppressWarnings("GoodTime") // should accept a java.time.Duration
+//    @SuppressWarnings("GoodTime") // should accept a java.time.Duration
     public static RateLimiter create(double permitsPerSecond, long warmupPeriod, TimeUnit unit) {
         if (warmupPeriod < 0)
             throw new IllegalArgumentException("warmupPeriod < 0");
@@ -159,7 +158,7 @@ public abstract class RateLimiter {
 
 //  @VisibleForTesting
     static RateLimiter create(double permitsPerSecond, long warmupPeriod, TimeUnit unit, double coldFactor, SleepingStopwatch stopwatch) {
-        RateLimiter rateLimiter = new SmoothWarmingUp(stopwatch, warmupPeriod, unit, coldFactor);
+        RateLimiter rateLimiter = new SmoothRateLimiter.SmoothWarmingUp(stopwatch, warmupPeriod, unit, coldFactor);
         rateLimiter.setRate(permitsPerSecond);
         return rateLimiter;
     }
@@ -335,7 +334,7 @@ public abstract class RateLimiter {
      * @return {@code true} if the permits were acquired, {@code false} otherwise
      * @throws IllegalArgumentException if the requested number of permits is negative or zero
      */
-    @SuppressWarnings("GoodTime") // should accept a java.time.Duration
+//    @SuppressWarnings("GoodTime") // should accept a java.time.Duration
     public boolean tryAcquire(int permits, long timeout, TimeUnit unit) {
         long timeoutMicros = max(unit.toMicros(timeout), 0);
         checkPermits(permits);

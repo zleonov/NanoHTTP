@@ -1,4 +1,4 @@
-package software.leonov.client.http;
+package software.leonov.client.http.guava;
 
 /*
  * Copyright (C) 2011 The Guava Authors

@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 
+import software.leonov.client.http.guava.RateLimiter;
+
 /**
  * An HTTP request which contains a {@code Message-Body}: {@code DELETE}, {@code POST}, or {@code PUT}.
  * 
@@ -32,11 +34,11 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public final class HttpRequestWithBody extends HttpRequest {
 
-    private RequestBody body = null;
-    private long length = -1;
+    private RequestBody body   = null;
+    private long        length = -1;
 
-    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) throws IOException {
-        super(method, url, proxy, hostnameVerifier, sslSocketFactory);
+    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter) throws IOException {
+        super(method, url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter);
     }
 
     /**
@@ -84,14 +86,14 @@ public final class HttpRequestWithBody extends HttpRequest {
      * Sends the HTTP request.
      * <p>
      * If the {@code Message-Body} {@link RequestBody#getContentEncoding() Content-Encoding} is known, and the
-     * {@code Content-Encoding} header has not already been {@link #setContentEncoding(String) set}, it will automatically be
-     * updated.
+     * {@code Content-Encoding} header has not already been {@link #setContentEncoding(String) set}, it will automatically
+     * be updated.
      * <p>
-     * If the {@code Message-Body} {@link RequestBody#length() Content-Length} is known, and the
-     * {@code Content-Length} header has not already been {@link #setContentLength(long) set}, it will automatically be updated.
+     * If the {@code Message-Body} {@link RequestBody#length() Content-Length} is known, and the {@code Content-Length}
+     * header has not already been {@link #setContentLength(long) set}, it will automatically be updated.
      * <p>
-     * If the {@code Message-Body} {@link RequestBody#getContentType() Content-Type} is known, and the
-     * {@code Content-Type} header has not already been {@link #setContentType(String) set}, it will automatically be updated.
+     * If the {@code Message-Body} {@link RequestBody#getContentType() Content-Type} is known, and the {@code Content-Type}
+     * header has not already been {@link #setContentType(String) set}, it will automatically be updated.
      * 
      * @return the response from the server
      * @throws HttpResponseException if the response does not contains a <i>2xx</i> {@link HttpResponse#getStatusCode()
