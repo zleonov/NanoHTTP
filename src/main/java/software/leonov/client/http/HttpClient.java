@@ -50,6 +50,8 @@ public final class HttpClient {
     private final boolean useCaches;
     private final Credentials credentials;
     private final Proxy proxy;
+    
+    private RateLimiter
 
     private HostnameVerifier hostnameVerifier;
     private SSLSocketFactory sslSocketFactory;
