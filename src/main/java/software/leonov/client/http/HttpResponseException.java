@@ -70,7 +70,7 @@ public class HttpResponseException extends IOException {
      * @param headers the response headers sent by the server or {@code null}
      * @return this {@code HttpResponseException} instance
      */
-    HttpResponseException setHeaders(final Map<String, List<String>> headers) {
+    HttpResponseException setResponseHeaders(final Map<String, List<String>> headers) {
         this.headers = headers;
         return this;
     }
@@ -116,7 +116,7 @@ public class HttpResponseException extends IOException {
      * @return an unmodifiable {@code Map} of the response headers sent by the server or {@code null} if they are not
      *         available
      */
-    public Map<String, List<String>> headers() {
+    public Map<String, List<String>> getResponseHeaders() {
         return headers;
     }
 

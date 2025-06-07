@@ -33,8 +33,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-import software.leonov.client.http.guava.RateLimiter;
-
 /**
  * An HTTP request with no {@code Message-Body}: {@code HEAD}, {@code GET}, {@code OPTIONS}, or {@code TRACE}.
  * 
@@ -183,8 +181,7 @@ public class HttpRequest {
     public HttpResponse send() throws IOException {
 
         try {
-            if (rateLimiter != null)
-                rateLimiter.acquire();
+            rateLimiter.acquire();
             connection.connect();
             final HttpResponse response = new HttpResponse(connection);
             return response;

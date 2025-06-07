@@ -34,8 +34,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import software.leonov.client.http.guava.RateLimiter;
-
 /**
  * The entry point for making HTTP requests. Instances of this class can be obtained by calling {@link #defaultClient()}
  * or using a {@link #builder() builder}.
@@ -52,8 +50,7 @@ public final class HttpClient {
     private final boolean                   useCaches;
     private final Credentials               credentials;
     private final Proxy                     proxy;
-
-    private RateLimiter rateLimiter;
+    private final RateLimiter               rateLimiter;
 
     private HostnameVerifier hostnameVerifier;
     private SSLSocketFactory sslSocketFactory;
@@ -97,6 +94,17 @@ public final class HttpClient {
      */
     public static HttpClient defaultClient() {
         return defaultClient;
+    }
+
+    /**
+     * Returns the maximum number of HTTP requests that can be made per second or {@link Double#POSITIVE_INFINITY}
+     * indicating unlimited requests.
+     * 
+     * @return the maximum number of HTTP requests that can be made per second or {@link Double#POSITIVE_INFINITY}
+     *         indicating unlimited requests
+     */
+    public double getMaxRequestsPerSecond() {
+        return rateLimiter.getRate();
     }
 
     /**
@@ -380,7 +388,7 @@ public final class HttpClient {
 
         private Proxy proxy = null;
 
-        private RateLimiter rateLimiter = null;
+        private RateLimiter rateLimiter = RateLimiter.unlimited();
 
         private Builder() {
         };
@@ -634,14 +642,14 @@ public final class HttpClient {
          * This is typically used to enforce rate limiting on outgoing requests to avoid overwhelming a server or exceeding API
          * quotas.
          *
-         * @param rate the maximum number of requests allowed per second
+         * @param permitsPerSecond the maximum number of requests allowed per second
          * @return this {@code Builder} instance
          */
-        public Builder setMaxRequestsPerSecond(final double rate) {
-            if (rate <= 0)
-                throw new IllegalArgumentException("rate <= 0");
+        public Builder setMaxRequestsPerSecond(final double permitsPerSecond) {
+            if (permitsPerSecond <= 0.0)
+                throw new IllegalArgumentException("rate <= 0.0");
 
-            this.rateLimiter = RateLimiter.create(rate);
+            this.rateLimiter = SimpleRateLimiter.create(permitsPerSecond);
             return this;
         }
 

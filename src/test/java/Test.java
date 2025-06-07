@@ -37,7 +37,7 @@ public class Test {
         testMineMultipart();
         }catch(HttpResponseException e  ) {
             System.out.println(e);
-            System.out.println(e.headers());
+            System.out.println(e.getResponseHeaders());
         }
         
         

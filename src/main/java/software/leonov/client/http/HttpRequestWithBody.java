@@ -25,8 +25,6 @@ import java.nio.file.Path;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 
-import software.leonov.client.http.guava.RateLimiter;
-
 /**
  * An HTTP request which contains a {@code Message-Body}: {@code DELETE}, {@code POST}, or {@code PUT}.
  * 

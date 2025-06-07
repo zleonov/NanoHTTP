@@ -85,7 +85,7 @@ final public class HttpResponse implements AutoCloseable {
         if (mediaType != null && mediaType.charset() != null)
             charset = mediaType.charset();
 
-        final Map<String, List<String>> headers = new CaseInsensitiveMap<>(Locale.US);
+        final Map<String, List<String>> headers = new CaseInsensitiveMap<>(Locale.ROOT);
         connection.getHeaderFields().forEach((name, values) -> headers.put(name, values));
         this.headers = Collections.unmodifiableMap(headers);
 
@@ -93,7 +93,7 @@ final public class HttpResponse implements AutoCloseable {
 
             final InputStream in = register(connection.getErrorStream());
 
-            throw new HttpResponseException(getStatusLine()).setServerResponse(in == null ? null : new ResponseBody() {
+            throw new HttpResponseException(getStatusLine() + " - " + from()).setServerResponse(in == null ? null : new ResponseBody() {
 
                 final byte[] bytes   = ByteStream.toByteArray(unzip(in));
                 final String message = new String(toByteArray(), charset);
@@ -125,7 +125,7 @@ final public class HttpResponse implements AutoCloseable {
 
                     return new String(toByteArray(), charset);
                 }
-            }).setHeaders(headers()).setStatusCode(getStatusCode()).from(from());
+            }).setResponseHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
         }
 
         date            = connection.getDate();
@@ -435,7 +435,7 @@ final public class HttpResponse implements AutoCloseable {
      * 
      * @return an unmodifiable {@code Map} of the response headers sent by the server
      */
-    public Map<String, List<String>> headers() {
+    public Map<String, List<String>> getHeaders() {
         return headers;
     }
 
