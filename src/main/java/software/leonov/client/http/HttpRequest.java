@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -40,10 +41,14 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class HttpRequest {
 
-    protected final HttpURLConnection connection;
-    protected final RateLimiter       rateLimiter;
+    protected final HttpURLConnection     connection;
+    private final RateLimiter             rateLimiter;
+    private final BiConsumer<String, URL> onConnect;
+    private final String                  method;
+    private final URL                     url;
 
-    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter) throws IOException {
+    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> onConnect)
+            throws IOException {
 
         if (!url.getProtocol().substring(0, 4).toLowerCase(Locale.US).equals("http"))
             throw new IllegalArgumentException("unsupported protocol: " + url.getProtocol());
@@ -63,6 +68,9 @@ public class HttpRequest {
         connection.setDoOutput(false);
 
         this.rateLimiter = rateLimiter;
+        this.onConnect   = onConnect;
+        this.method      = method;
+        this.url         = url;
     }
 
     /**
@@ -170,6 +178,17 @@ public class HttpRequest {
         return connection.getUseCaches();
     }
 
+    protected void connect() throws IOException {
+        try {
+            rateLimiter.acquire();
+            onConnect.accept(method, url);
+            connection.connect();
+        } catch (final Exception e) {
+            connection.disconnect();
+            throw e;
+        }
+    }
+
     /**
      * Sends the HTTP request.
      * 
@@ -179,16 +198,8 @@ public class HttpRequest {
      * @throws IOException           if an I/O error occurs
      */
     public HttpResponse send() throws IOException {
-
-        try {
-            rateLimiter.acquire();
-            connection.connect();
-            final HttpResponse response = new HttpResponse(connection);
-            return response;
-        } catch (final Exception e) {
-            connection.disconnect();
-            throw e;
-        }
+        connect();
+        return new HttpResponse(connection);
     }
 
     /**

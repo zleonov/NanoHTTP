@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -35,8 +36,9 @@ public final class HttpRequestWithBody extends HttpRequest {
     private RequestBody body   = null;
     private long        length = -1;
 
-    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter) throws IOException {
-        super(method, url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter);
+    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> onConnect)
+            throws IOException {
+        super(method, url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect);
     }
 
     /**
@@ -118,16 +120,20 @@ public final class HttpRequestWithBody extends HttpRequest {
             else
                 connection.setChunkedStreamingMode(0);
 
+            super.connect();
+
             try (final OutputStream out = connection.getOutputStream()) {
                 body.write(out);
             } catch (final Exception e) {
                 connection.disconnect();
                 throw e;
             }
-        } else
-            connection.setFixedLengthStreamingMode(0); // Content-Length = 0
 
-        return super.send();
+            return new HttpResponse(connection);
+        } else {
+            connection.setFixedLengthStreamingMode(0); // Content-Length = 0
+            return super.send();
+        }
     }
 
     /**
