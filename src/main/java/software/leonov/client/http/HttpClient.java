@@ -670,7 +670,7 @@ public final class HttpClient {
          * <p>
          * For example: <pre>
          * {@code 
-         *  HttpClient.builder().onSend((method, url) -> System.out.println("Sending a " + method + " to " + url)).build();
+         *  HttpClient.builder().onSend((method, url) -> System.out.println("Sending a " + method + " request to " + url)).build();
          * }
          * </pre>
          * 
