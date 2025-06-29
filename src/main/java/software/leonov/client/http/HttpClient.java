@@ -55,7 +55,7 @@ public final class HttpClient {
     private final Credentials               credentials;
     private final Proxy                     proxy;
     private final RateLimiter               rateLimiter;
-    private final BiConsumer<String, URL>   onConnect;
+    private final BiConsumer<String, URL>   requestListener;
 
     private HostnameVerifier hostnameVerifier;
     private SSLSocketFactory sslSocketFactory;
@@ -63,7 +63,7 @@ public final class HttpClient {
     private static final HttpClient defaultClient = builder().build();
 
     private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final Credentials credentials,
-            final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> onConnect) {
+            final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> requestListener) {
 
         this.proxy            = proxy;
         this.headers          = headers;
@@ -75,7 +75,7 @@ public final class HttpClient {
         this.hostnameVerifier = hostnameVerifier;
         this.sslSocketFactory = sslSocketFactory;
         this.rateLimiter      = rateLimiter;
-        this.onConnect        = onConnect;
+        this.requestListener  = requestListener;
     }
 
     /**
@@ -139,7 +139,7 @@ public final class HttpClient {
     public HttpRequestWithBody delete(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect));
+        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
     }
 
     /**
@@ -164,7 +164,7 @@ public final class HttpClient {
     public HttpRequest get(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect));
+        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
     }
 
     /**
@@ -198,7 +198,7 @@ public final class HttpClient {
     public HttpRequest head(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect));
+        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
     }
 
     /**
@@ -223,7 +223,7 @@ public final class HttpClient {
     public HttpRequest options(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect));
+        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
     }
 
     /**
@@ -279,7 +279,7 @@ public final class HttpClient {
     public HttpRequestWithBody post(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect));
+        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
     }
 
     /**
@@ -308,7 +308,7 @@ public final class HttpClient {
     public HttpRequestWithBody put(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect));
+        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
     }
 
     /**
@@ -338,7 +338,7 @@ public final class HttpClient {
     public HttpRequest trace(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect));
+        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
     }
 
     private <T extends HttpRequest> T setDefaults(final T request) {
@@ -397,7 +397,7 @@ public final class HttpClient {
         private RateLimiter rateLimiter = RateLimiter.unlimited();
 
         @SuppressWarnings("unchecked")
-        private BiConsumer<String, URL> onConnect = (BiConsumer<String, URL>) DO_NOTHING_BI_CONSUMER;
+        private BiConsumer<String, URL> requestListener = (BiConsumer<String, URL>) DO_NOTHING_BI_CONSUMER;
 
         private Builder() {
         }
@@ -408,7 +408,7 @@ public final class HttpClient {
          * @return a new {@code HttpClient} configured by this builder
          */
         public HttpClient build() {
-            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, credentials, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect);
+            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, credentials, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener);
         }
 
         /**
@@ -674,13 +674,13 @@ public final class HttpClient {
          * }
          * </pre>
          * 
-         * @param onConnect the consumer to invoke before sending an {@code HttpRequest}
+         * @param requestListener the consumer to invoke before sending an {@code HttpRequest}
          * @return this {@code Builder} instance
          */
-        public Builder onSend(final BiConsumer<String, URL> onConnect) {
-            if (onConnect == null)
-                throw new NullPointerException("onConnect == null");
-            this.onConnect = onConnect;
+        public Builder onRequest(final BiConsumer<String, URL> requestListener) {
+            if (requestListener == null)
+                throw new NullPointerException("requestListener == null");
+            this.requestListener = requestListener;
             return this;
         }
     }

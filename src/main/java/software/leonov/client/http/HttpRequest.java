@@ -43,11 +43,11 @@ public class HttpRequest {
 
     protected final HttpURLConnection     connection;
     private final RateLimiter             rateLimiter;
-    private final BiConsumer<String, URL> onConnect;
+    private final BiConsumer<String, URL> requestListener;
     private final String                  method;
     private final URL                     url;
 
-    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> onConnect)
+    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> requestListener)
             throws IOException {
 
         if (!url.getProtocol().substring(0, 4).toLowerCase(Locale.US).equals("http"))
@@ -67,10 +67,10 @@ public class HttpRequest {
 
         connection.setDoOutput(false);
 
-        this.rateLimiter = rateLimiter;
-        this.onConnect   = onConnect;
-        this.method      = method;
-        this.url         = url;
+        this.rateLimiter     = rateLimiter;
+        this.requestListener = requestListener;
+        this.method          = method;
+        this.url             = url;
     }
 
     /**
@@ -181,7 +181,7 @@ public class HttpRequest {
     protected void connect() throws IOException {
         try {
             rateLimiter.acquire();
-            onConnect.accept(method, url);
+            requestListener.accept(method, url);
             connection.connect();
         } catch (final Exception e) {
             connection.disconnect();

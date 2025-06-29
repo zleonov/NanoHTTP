@@ -36,9 +36,9 @@ public final class HttpRequestWithBody extends HttpRequest {
     private RequestBody body   = null;
     private long        length = -1;
 
-    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> onConnect)
+    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> requestListener)
             throws IOException {
-        super(method, url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, onConnect);
+        super(method, url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener);
     }
 
     /**
