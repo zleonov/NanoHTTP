@@ -20,7 +20,6 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -41,11 +40,11 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class HttpRequest {
 
-    protected final HttpURLConnection     connection;
+    protected HttpURLConnection           connection;
     private final RateLimiter             rateLimiter;
     private final BiConsumer<String, URL> requestListener;
-    private final String                  method;
-    private final URL                     url;
+
+    protected final Proxy proxy;
 
     protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> requestListener)
             throws IOException {
@@ -53,10 +52,23 @@ public class HttpRequest {
         if (!url.getProtocol().substring(0, 4).toLowerCase(Locale.US).equals("http"))
             throw new IllegalArgumentException("unsupported protocol: " + url.getProtocol());
 
-        final URLConnection connection = proxy == null ? url.openConnection() : url.openConnection(proxy);
+        this.connection = createConnection(method, url, proxy, hostnameVerifier, sslSocketFactory);
 
-        this.connection = (HttpURLConnection) connection;
-        this.connection.setRequestMethod(method);
+        this.proxy           = proxy;
+        this.rateLimiter     = rateLimiter;
+        this.requestListener = requestListener;
+    }
+
+    private static HttpURLConnection createConnection(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) throws IOException {
+        return createConnection(null, method, url, proxy, hostnameVerifier, sslSocketFactory);
+    }
+
+    protected static HttpURLConnection createConnection(final HttpURLConnection currConn, final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory)
+            throws IOException {
+        
+        final HttpURLConnection connection = (HttpURLConnection) (proxy == null ? url.openConnection() : url.openConnection(proxy));
+
+        connection.setRequestMethod(method);
 
         if (connection instanceof HttpsURLConnection) {
             if (hostnameVerifier != null)
@@ -67,10 +79,16 @@ public class HttpRequest {
 
         connection.setDoOutput(false);
 
-        this.rateLimiter     = rateLimiter;
-        this.requestListener = requestListener;
-        this.method          = method;
-        this.url             = url;
+        if (currConn != null) {
+            connection.setConnectTimeout(currConn.getConnectTimeout());
+            connection.setIfModifiedSince(currConn.getIfModifiedSince());
+            connection.setReadTimeout(currConn.getReadTimeout());
+            connection.setInstanceFollowRedirects(currConn.getInstanceFollowRedirects());
+            connection.setUseCaches(currConn.getUseCaches());
+            currConn.getRequestProperties().forEach((name, values) -> connection.setRequestProperty(name, values.get(0)));
+        }
+        
+        return connection;
     }
 
     /**
@@ -181,7 +199,7 @@ public class HttpRequest {
     protected void connect() throws IOException {
         try {
             rateLimiter.acquire();
-            requestListener.accept(method, url);
+            requestListener.accept(getRequestMethod(), to());
             connection.connect();
         } catch (final Exception e) {
             connection.disconnect();
@@ -198,8 +216,17 @@ public class HttpRequest {
      * @throws IOException           if an I/O error occurs
      */
     public HttpResponse send() throws IOException {
-        connect();
-        return new HttpResponse(connection);
+
+        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), to(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
+                connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getSSLSocketFactory() : null);
+
+        try {
+            connect();
+            return new HttpResponse(connection);
+        } finally {
+            this.connection = newConnection;
+        }
+
     }
 
     /**
@@ -340,6 +367,15 @@ public class HttpRequest {
      */
     public URL to() {
         return connection.getURL();
+    }
+
+    /**
+     * Returns the HTTP request method.
+     * 
+     * @return the HTTP request method
+     */
+    public String getRequestMethod() {
+        return connection.getRequestMethod();
     }
 
     /**

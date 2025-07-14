@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.util.function.BiConsumer;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -102,37 +103,42 @@ public final class HttpRequestWithBody extends HttpRequest {
      */
     @Override
     public HttpResponse send() throws IOException {
+        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), to(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
+                connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getSSLSocketFactory() : null);
+        try {
+            if (body != null) {
+                connection.setDoOutput(true);
 
-        if (body != null) {
-            connection.setDoOutput(true);
+                if (body.getContentEncoding() != null)
+                    setIfNotSet("Content-Encoding", body.getContentEncoding());
 
-            if (body.getContentEncoding() != null)
-                setIfNotSet("Content-Encoding", body.getContentEncoding());
+                if (body.getContentType() != null)
+                    setIfNotSet("Content-Type", body.getContentType());
 
-            if (body.getContentType() != null)
-                setIfNotSet("Content-Type", body.getContentType());
+                if (length < 0 && body.length() >= 0)
+                    length = body.length();
 
-            if (length < 0 && body.length() >= 0)
-                length = body.length();
+                if (length >= 0)
+                    connection.setFixedLengthStreamingMode(length);
+                else
+                    connection.setChunkedStreamingMode(0);
 
-            if (length >= 0)
-                connection.setFixedLengthStreamingMode(length);
-            else
-                connection.setChunkedStreamingMode(0);
+                super.connect();
 
-            super.connect();
+                try (final OutputStream out = connection.getOutputStream()) {
+                    body.write(out);
+                } catch (final Exception e) {
+                    connection.disconnect();
+                    throw e;
+                }
 
-            try (final OutputStream out = connection.getOutputStream()) {
-                body.write(out);
-            } catch (final Exception e) {
-                connection.disconnect();
-                throw e;
+                return new HttpResponse(connection);
+            } else {
+                connection.setFixedLengthStreamingMode(0); // Content-Length = 0
+                return super.send();
             }
-
-            return new HttpResponse(connection);
-        } else {
-            connection.setFixedLengthStreamingMode(0); // Content-Length = 0
-            return super.send();
+        } finally {
+            this.connection = newConnection;
         }
     }
 
