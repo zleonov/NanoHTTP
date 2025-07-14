@@ -103,8 +103,10 @@ public final class HttpRequestWithBody extends HttpRequest {
      */
     @Override
     public HttpResponse send() throws IOException {
+
         final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), to(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
                 connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getSSLSocketFactory() : null);
+
         try {
             if (body != null) {
                 connection.setDoOutput(true);
