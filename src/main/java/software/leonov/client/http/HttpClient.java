@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.BiConsumer;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -44,9 +43,6 @@ import javax.net.ssl.X509TrustManager;
 // What about https://docs.oracle.com/javase/8/docs/api/java/net/doc-files/net-properties.html#MiscHTTP
 public final class HttpClient {
 
-    private static final BiConsumer<?, ?> DO_NOTHING_BI_CONSUMER = (a, b) -> {
-    };
-
     private final Map<String, List<String>> headers;
     private final Duration                  connectTimeout;
     private final boolean                   followRedirects;
@@ -55,7 +51,7 @@ public final class HttpClient {
     private final Credentials               credentials;
     private final Proxy                     proxy;
     private final RateLimiter               rateLimiter;
-    private final BiConsumer<String, URL>   requestListener;
+    private final HttpRequestInterceptor    interceptor;
 
     private HostnameVerifier hostnameVerifier;
     private SSLSocketFactory sslSocketFactory;
@@ -63,7 +59,7 @@ public final class HttpClient {
     private static final HttpClient defaultClient = builder().build();
 
     private HttpClient(final Proxy proxy, final Map<String, List<String>> headers, final boolean useCaches, final boolean followRedirects, final Duration connectTimeout, final Duration readTimeout, final Credentials credentials,
-            final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> requestListener) {
+            final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final HttpRequestInterceptor interceptor) {
 
         this.proxy            = proxy;
         this.headers          = headers;
@@ -75,7 +71,7 @@ public final class HttpClient {
         this.hostnameVerifier = hostnameVerifier;
         this.sslSocketFactory = sslSocketFactory;
         this.rateLimiter      = rateLimiter;
-        this.requestListener  = requestListener;
+        this.interceptor      = interceptor;
     }
 
     /**
@@ -139,7 +135,7 @@ public final class HttpClient {
     public HttpRequestWithBody delete(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
+        return setDefaults(new HttpRequestWithBody("DELETE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor));
     }
 
     /**
@@ -164,7 +160,7 @@ public final class HttpClient {
     public HttpRequest get(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
+        return setDefaults(new HttpRequest("GET", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor));
     }
 
     /**
@@ -198,7 +194,7 @@ public final class HttpClient {
     public HttpRequest head(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
+        return setDefaults(new HttpRequest("HEAD", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor));
     }
 
     /**
@@ -223,7 +219,7 @@ public final class HttpClient {
     public HttpRequest options(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
+        return setDefaults(new HttpRequest("OPTIONS", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor));
     }
 
     /**
@@ -279,7 +275,7 @@ public final class HttpClient {
     public HttpRequestWithBody post(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
+        return setDefaults(new HttpRequestWithBody("POST", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor));
     }
 
     /**
@@ -308,7 +304,7 @@ public final class HttpClient {
     public HttpRequestWithBody put(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
+        return setDefaults(new HttpRequestWithBody("PUT", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor));
     }
 
     /**
@@ -338,7 +334,7 @@ public final class HttpClient {
     public HttpRequest trace(final URL url) throws IOException {
         if (url == null)
             throw new NullPointerException("url == null");
-        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener));
+        return setDefaults(new HttpRequest("TRACE", url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor));
     }
 
     private <T extends HttpRequest> T setDefaults(final T request) {
@@ -396,8 +392,7 @@ public final class HttpClient {
 
         private RateLimiter rateLimiter = RateLimiter.unlimited();
 
-        @SuppressWarnings("unchecked")
-        private BiConsumer<String, URL> requestListener = (BiConsumer<String, URL>) DO_NOTHING_BI_CONSUMER;
+        private HttpRequestInterceptor interceptor = HttpRequestInterceptor.DO_NOTHING;
 
         private Builder() {
         }
@@ -408,7 +403,7 @@ public final class HttpClient {
          * @return a new {@code HttpClient} configured by this builder
          */
         public HttpClient build() {
-            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, credentials, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener);
+            return new HttpClient(proxy, headers, useCaches, followRedirects, connectTimeout, readTimeout, credentials, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor);
         }
 
         /**
@@ -663,24 +658,19 @@ public final class HttpClient {
         }
 
         /**
-         * Provides a {@code Consumer} which will be invoked prior to {@link HttpRequest#send() sending} an {@link HttpRequest}.
+         * Provides an {@code HttpRequestIntercepter} which will be invoked prior to {@link HttpRequest#send() sending} an
+         * {@link HttpRequest}.
          * <p>
-         * This is a convenience method usually used for logging purposes. The consumer will be invoked with the request method
-         * and the target url.
-         * <p>
-         * For example: <pre>
-         * {@code 
-         *  HttpClient.builder().onSend((method, url) -> System.out.println("Sending a " + method + " request to " + url)).build();
-         * }
-         * </pre>
+         * Usually used for logging purposes or to set headers common to all requests. The request interceptor will be invoked
+         * before sending each request.
          * 
-         * @param requestListener the consumer to invoke before sending an {@code HttpRequest}
+         * @param interceptor the request interceptor to invoke before sending an {@code HttpRequest}
          * @return this {@code Builder} instance
          */
-        public Builder onRequest(final BiConsumer<String, URL> requestListener) {
-            if (requestListener == null)
-                throw new NullPointerException("requestListener == null");
-            this.requestListener = requestListener;
+        public Builder setRequestInterceptor(final HttpRequestInterceptor interceptor) {
+            if (interceptor == null)
+                throw new NullPointerException("interceptor == null");
+            this.interceptor = interceptor;
             return this;
         }
     }

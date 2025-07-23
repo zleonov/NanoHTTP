@@ -54,7 +54,7 @@ final public class HttpResponse implements AutoCloseable {
     private final ResponseBody              body;
     private final Map<String, List<String>> headers;
     private final int                       statusCode;
-    private final URL                       from;
+    private final URL                       url;
     private final MediaType                 mediaType;
 
     private Charset charset = StandardCharsets.ISO_8859_1; // default charset
@@ -79,7 +79,7 @@ final public class HttpResponse implements AutoCloseable {
         reason      = connection.getResponseMessage();
         contentType = connection.getContentType();
         encoding    = connection.getContentEncoding();
-        from        = connection.getURL();
+        url         = connection.getURL();
         mediaType   = MediaType.tryParse(contentType);
 
         if (mediaType != null && mediaType.charset() != null)
@@ -93,7 +93,7 @@ final public class HttpResponse implements AutoCloseable {
 
             final InputStream in = register(connection.getErrorStream());
 
-            throw new HttpResponseException(getStatusLine() + " - " + from()).setServerResponse(in == null ? null : new ResponseBody() {
+            throw new HttpResponseException(getStatusLine() + " - " + getURL()).setServerResponse(in == null ? null : new ResponseBody() {
 
                 final byte[] bytes   = ByteStream.toByteArray(unzip(in));
                 final String message = new String(toByteArray(), charset);
@@ -125,7 +125,7 @@ final public class HttpResponse implements AutoCloseable {
 
                     return new String(toByteArray(), charset);
                 }
-            }).setResponseHeaders(getHeaders()).setStatusCode(getStatusCode()).from(from());
+            }).setResponseHeaders(getHeaders()).setStatusCode(getStatusCode()).setURL(getURL());
         }
 
         date            = connection.getDate();
@@ -288,8 +288,8 @@ final public class HttpResponse implements AutoCloseable {
      * 
      * @return the request {@code URL} that initiated this {@link HttpRequest}
      */
-    public URL from() {
-        return from;
+    public URL getURL() {
+        return url;
     }
 
     /**

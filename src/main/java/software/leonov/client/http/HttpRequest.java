@@ -27,7 +27,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -40,13 +39,13 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class HttpRequest {
 
-    protected HttpURLConnection           connection;
-    private final RateLimiter             rateLimiter;
-    private final BiConsumer<String, URL> requestListener;
+    protected HttpURLConnection          connection;
+    private final RateLimiter            rateLimiter;
+    private final HttpRequestInterceptor interceptor;
 
     protected final Proxy proxy;
 
-    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> requestListener)
+    protected HttpRequest(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final HttpRequestInterceptor interceptor)
             throws IOException {
 
         if (!url.getProtocol().substring(0, 4).toLowerCase(Locale.US).equals("http"))
@@ -54,9 +53,9 @@ public class HttpRequest {
 
         this.connection = createConnection(method, url, proxy, hostnameVerifier, sslSocketFactory);
 
-        this.proxy           = proxy;
-        this.rateLimiter     = rateLimiter;
-        this.requestListener = requestListener;
+        this.proxy       = proxy;
+        this.rateLimiter = rateLimiter;
+        this.interceptor = interceptor;
     }
 
     private static HttpURLConnection createConnection(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory) throws IOException {
@@ -65,7 +64,7 @@ public class HttpRequest {
 
     protected static HttpURLConnection createConnection(final HttpURLConnection currConn, final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory)
             throws IOException {
-        
+
         final HttpURLConnection connection = (HttpURLConnection) (proxy == null ? url.openConnection() : url.openConnection(proxy));
 
         connection.setRequestMethod(method);
@@ -87,7 +86,7 @@ public class HttpRequest {
             connection.setUseCaches(currConn.getUseCaches());
             currConn.getRequestProperties().forEach((name, values) -> connection.setRequestProperty(name, values.get(0)));
         }
-        
+
         return connection;
     }
 
@@ -199,7 +198,7 @@ public class HttpRequest {
     protected void connect() throws IOException {
         try {
             rateLimiter.acquire();
-            requestListener.accept(getRequestMethod(), to());
+            interceptor.process(this);
             connection.connect();
         } catch (final Exception e) {
             connection.disconnect();
@@ -217,7 +216,7 @@ public class HttpRequest {
      */
     public HttpResponse send() throws IOException {
 
-        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), to(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
+        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), getURL(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
                 connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getSSLSocketFactory() : null);
 
         try {
@@ -365,7 +364,7 @@ public class HttpRequest {
      * 
      * @return the target {@code URL} of this request
      */
-    public URL to() {
+    public URL getURL() {
         return connection.getURL();
     }
 

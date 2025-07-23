@@ -21,7 +21,6 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.function.BiConsumer;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -37,9 +36,9 @@ public final class HttpRequestWithBody extends HttpRequest {
     private RequestBody body   = null;
     private long        length = -1;
 
-    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final BiConsumer<String, URL> requestListener)
+    HttpRequestWithBody(final String method, final URL url, final Proxy proxy, final HostnameVerifier hostnameVerifier, final SSLSocketFactory sslSocketFactory, final RateLimiter rateLimiter, final HttpRequestInterceptor interceptor)
             throws IOException {
-        super(method, url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, requestListener);
+        super(method, url, proxy, hostnameVerifier, sslSocketFactory, rateLimiter, interceptor);
     }
 
     /**
@@ -104,7 +103,7 @@ public final class HttpRequestWithBody extends HttpRequest {
     @Override
     public HttpResponse send() throws IOException {
 
-        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), to(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
+        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), getURL(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
                 connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getSSLSocketFactory() : null);
 
         try {

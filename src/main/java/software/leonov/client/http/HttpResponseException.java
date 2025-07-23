@@ -29,10 +29,10 @@ public class HttpResponseException extends IOException {
 
     private static final long serialVersionUID = 1016328592873099463L;
 
-    private int statusCode = -1;
-    private ResponseBody response = null;
-    private URL from = null;
-    private Map<String, List<String>> headers = null;
+    private int                       statusCode = -1;
+    private ResponseBody              response   = null;
+    private URL                       url        = null;
+    private Map<String, List<String>> headers    = null;
 
     /**
      * Constructs an {@code HttpResponseException} with the specified detail message.
@@ -92,8 +92,8 @@ public class HttpResponseException extends IOException {
      * @param from the {@code URL} responsible for this exception or {@code null}
      * @return this {@code HttpResponseException} instance
      */
-    HttpResponseException from(final URL from) {
-        this.from = from;
+    HttpResponseException setURL(final URL from) {
+        this.url = from;
         return this;
     }
 
@@ -149,8 +149,8 @@ public class HttpResponseException extends IOException {
      * 
      * @return the {@code URL} responsible for this exception or {@code null} if it is not available
      */
-    public URL from() {
-        return from;
+    public URL getURL() {
+        return url;
     }
 
 }
