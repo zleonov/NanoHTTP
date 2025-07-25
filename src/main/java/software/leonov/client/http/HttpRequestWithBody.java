@@ -103,7 +103,7 @@ public final class HttpRequestWithBody extends HttpRequest {
     @Override
     public HttpResponse send() throws IOException {
 
-        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), getURL(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
+        final HttpURLConnection conn = createConnection(connection, getRequestMethod(), getURL(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
                 connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getSSLSocketFactory() : null);
 
         try {
@@ -111,10 +111,10 @@ public final class HttpRequestWithBody extends HttpRequest {
                 connection.setDoOutput(true);
 
                 if (body.getContentEncoding() != null)
-                    setIfNotSet("Content-Encoding", body.getContentEncoding());
+                    setIfAbsent("Content-Encoding", body.getContentEncoding());
 
                 if (body.getContentType() != null)
-                    setIfNotSet("Content-Type", body.getContentType());
+                    setIfAbsent("Content-Type", body.getContentType());
 
                 if (length < 0 && body.length() >= 0)
                     length = body.length();
@@ -139,7 +139,7 @@ public final class HttpRequestWithBody extends HttpRequest {
                 return super.send();
             }
         } finally {
-            this.connection = newConnection;
+            this.connection = conn;
         }
     }
 

@@ -216,14 +216,14 @@ public class HttpRequest {
      */
     public HttpResponse send() throws IOException {
 
-        final HttpURLConnection newConnection = createConnection(connection, getRequestMethod(), getURL(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
+        final HttpURLConnection conn = createConnection(connection, getRequestMethod(), getURL(), proxy, connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getHostnameVerifier() : null,
                 connection instanceof HttpsURLConnection ? ((HttpsURLConnection) connection).getSSLSocketFactory() : null);
 
         try {
             connect();
             return new HttpResponse(connection);
         } finally {
-            this.connection = newConnection;
+            this.connection = conn;
         }
 
     }
@@ -413,7 +413,7 @@ public class HttpRequest {
         return this;
     }
 
-    protected void setIfNotSet(final String name, final String value) {
+    protected void setIfAbsent(final String name, final String value) {
 
         if (getHeader(name) == null)
             setHeader(name, value);

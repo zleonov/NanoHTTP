@@ -7,6 +7,8 @@ import java.util.Arrays;
 
 final class ByteStream {
 
+    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
     private static final int BUFFER_SIZE = 8192;
 
     private ByteStream() {
@@ -35,14 +37,15 @@ final class ByteStream {
         int    n;
 
         do {
-            while ((n = in.read(bytes, total, length - total)) > 0)
+            while ((n = in.read(bytes, total, (int) length - total)) > 0)
                 total += n;
 
             if (total > maxSize)
                 throw new SizeLimitExceededException();
 
             if ((n = in.read()) != -1) {
-                bytes          = Arrays.copyOf(bytes, (length *= 2) > Integer.MAX_VALUE ? Integer.MAX_VALUE : length);
+                length         = (length *= 2) > MAX_ARRAY_SIZE ? MAX_ARRAY_SIZE : length;
+                bytes          = Arrays.copyOf(bytes, (int) length);
                 bytes[total++] = (byte) n;
             }
         } while (n != -1);
